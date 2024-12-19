@@ -1,0 +1,1 @@
+use irc::main;
