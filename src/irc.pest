@@ -14,13 +14,14 @@ crlf    = _{ "\x0D\x0A" }
 // <escaped value> ::= <sequence of any characters except NUL, CR, LF, semicolon (`;`) and SPACE>
 // <vendor>        ::= <host>
 
-tags          = @{ "@" ~ tag_list }
-tag_list      = @{ tag ~ (";" ~ tag)* }
-tag           = @{ key ~ "=" ~ value }
-key           = @{ client_prefix? ~ (vendor ~ "/")? }
+tags          = ${ at ~ tag ~ (semicolon ~ tag)* }
+tag           = ${ key ~ "=" ~ value }
+key           = ${ client_prefix? ~ (vendor ~ "/")? }
 value         =  { ANY+ }
 vendor        =  { ANY+ }
 client_prefix = _{ "+" }
+
+semicolon = _{ ";" }
 
 // source          ::=  <servername> / ( <nickname> [ "!" <user> ] [ "@" <host> ] )
 // nick            ::=  <any characters except NUL, CR, LF, chantype
@@ -28,16 +29,29 @@ client_prefix = _{ "+" }
 // NUL, CR, LF, and SPACE>
 // user            ::=  <sequence of any characters except NUL, CR, LF, and SPACE>
 
-source = { ANY+ }
+source = ${ LETTER+ ~ at ~ LETTER+ }
+
+at = _{ "@" }
 
 // command         ::=  letter* / 3digit
 
-command =  { LETTER+ | digit3 }
-digit3  = @{ NUMBER{3} }
+command = ${ ASCII_ALPHA+ | digit3 }
+digit3  = ${ NUMBER{3} }
 
 // parameters      ::=  *( SPACE middle ) [ SPACE ":" trailing ]
 // nospcrlfcl      ::=  <sequence of any characters except NUL, CR, LF, colon (`:`) and SPACE>
 // middle          ::=  nospcrlfcl *( ":" / nospcrlfcl )
 // trailing        ::=  *( ":" / " " / nospcrlfcl )
 
-parameters = { ANY+ }
+parameters = { middle* ~ trailing? }
+
+middle         = @{ nospcrlfcl ~ nospcrlf* }
+trailing       = ${ colon ~ trailing_inner }
+trailing_inner = @{ nocrlf* }
+
+colon = _{ ":" }
+
+// TODO: check with unit tests if we really need to explicitely exclude spaces
+nospcrlfcl = { !(" " | "\0" | "\r" | "\n" | ":") ~ ANY }
+nospcrlf   = { !(" " | "\0" | "\r" | "\n") ~ ANY }
+nocrlf     = { !("\0" | "\r" | "\n") ~ ANY }
