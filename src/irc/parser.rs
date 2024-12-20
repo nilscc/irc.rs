@@ -1,4 +1,7 @@
-use std::collections::BTreeMap;
+use std::{
+    collections::BTreeMap,
+    fmt::{Display, Pointer},
+};
 
 use pest::{
     error::{Error, ErrorVariant},
@@ -32,8 +35,17 @@ pub enum Command {
 impl Command {
     pub fn valid(&self) -> bool {
         match self {
-            Self::Digit3(val) => 100 <= *val && *val <= 999,
+            Self::Digit3(val) => 1 <= *val && *val <= 999,
             Self::Cmd(cmd) => !cmd.is_empty(),
+        }
+    }
+}
+
+impl Display for Command {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Digit3(val) => write!(f, "{val:0>3}"),
+            Self::Cmd(cmd) => write!(f, "{cmd}"),
         }
     }
 }
@@ -72,7 +84,7 @@ impl Message {
             match pair.as_rule() {
                 Rule::tags => tags = Self::parse_tags(pair.into_inner())?,
                 Rule::source => source = Some(Self::parse_source(pair.into_inner())?),
-                Rule::command => command = Self::parse_command(pair.as_str())?,
+                Rule::command => command = Self::parse_command(pair)?,
                 Rule::parameters => {
                     parameters.append(&mut Self::parse_parameters(pair.into_inner())?)
                 }
@@ -114,9 +126,12 @@ impl Message {
         todo!()
     }
 
-    fn parse_command(command: &str) -> Result<Command, Error<Rule>> {
-        // TODO: handle digit3
-        Ok(Command::Cmd(command.to_owned()))
+    fn parse_command(pair: Pair<Rule>) -> Result<Command, Error<Rule>> {
+        let cmd = pair.as_str().to_owned();
+        match pair.into_inner().next() {
+            Some(val) if val.as_rule() == Rule::digit3 => Ok(Command::Digit3(cmd.parse().unwrap())),
+            _ => Ok(Command::Cmd(cmd)),
+        }
     }
 
     fn parse_parameters(pairs: Pairs<Rule>) -> Result<Vec<String>, Error<Rule>> {

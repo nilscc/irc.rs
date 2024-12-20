@@ -26,6 +26,24 @@ fn test_message_parse_simple_command() {
     )
 }
 
+/// Simple 3digit command with no parameters
+#[test]
+fn test_message_parse_3digit_command() {
+    let res = Message::parse("001");
+    assert_eq!(
+        res,
+        Ok(Message {
+            tags: BTreeMap::new(),
+            source: None,
+            command: Command::Digit3(1),
+            parameters: vec![],
+        })
+    );
+
+    // check string generation
+    assert_eq!("001", res.unwrap().command.to_string());
+}
+
 /// Simple command with single parameters
 #[test]
 fn test_message_parse_single_param() {

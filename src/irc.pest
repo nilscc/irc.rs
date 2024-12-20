@@ -36,7 +36,7 @@ at = _{ "@" }
 // command         ::=  letter* / 3digit
 
 command = ${ ASCII_ALPHA+ | digit3 }
-digit3  = ${ NUMBER{3} }
+digit3  = @{ NUMBER{3} }
 
 // parameters      ::=  *( SPACE middle ) [ SPACE ":" trailing ]
 // nospcrlfcl      ::=  <sequence of any characters except NUL, CR, LF, colon (`:`) and SPACE>
