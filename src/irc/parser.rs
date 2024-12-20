@@ -1,7 +1,4 @@
-use std::{
-    collections::BTreeMap,
-    fmt::{Display, Pointer},
-};
+use std::{collections::BTreeMap, fmt::Display};
 
 use pest::{
     error::{Error, ErrorVariant},
@@ -17,7 +14,7 @@ mod test;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Message {
-    pub tags: BTreeMap<String, String>,
+    pub tags: BTreeMap<String, Option<String>>,
     pub source: Option<Source>,
     pub command: Command,
     pub parameters: Vec<String>,
@@ -100,7 +97,7 @@ impl Message {
         })
     }
 
-    fn parse_tags(pairs: Pairs<Rule>) -> Result<BTreeMap<String, String>, Error<Rule>> {
+    fn parse_tags(pairs: Pairs<Rule>) -> Result<BTreeMap<String, Option<String>>, Error<Rule>> {
         let mut tags = BTreeMap::new();
         for pair in pairs {
             match pair.as_rule() {
@@ -111,10 +108,13 @@ impl Message {
                         _ => todo!(),
                     };
                     let val = match inner.next() {
-                        Some(v) if v.as_rule() == Rule::value => v.as_str(),
-                        _ => todo!(),
+                        // TODO: unescape
+                        Some(v) if v.as_rule() == Rule::escaped_value => {
+                            Some(v.as_str().to_owned())
+                        }
+                        _ => None,
                     };
-                    tags.insert(key.to_owned(), val.to_owned());
+                    tags.insert(key.to_owned(), val);
                 }
                 _ => return Err(Self::unexpected_rule(pair.clone())),
             }

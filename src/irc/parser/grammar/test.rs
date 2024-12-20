@@ -35,8 +35,7 @@ fn test_simple_command() {
     println!("{pair:?}");
     assert_eq!(pair.as_rule(), Rule::command);
     assert_eq!(pair.as_str(), "PING");
-    let mut inner = pair.into_inner();
-    assert_eq!(inner.len(), 0);
+    assert_eq!(pair.into_inner().len(), 0);
 }
 
 #[test]
@@ -57,4 +56,52 @@ fn test_3digit_command() {
 fn test_invalid_single_digit_command() {
     let res = Grammar::parse(Rule::command, "1");
     assert!(res.is_err());
+}
+
+#[test]
+fn test_tags() {
+    let mut res = Grammar::parse(Rule::tags, "@id=123AB;rose").unwrap();
+    let pair = res.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::tags);
+
+    // first tag "id=123AB"
+    let mut inner = pair.into_inner();
+    let pair = inner.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::tag);
+
+    {
+        let mut inner = pair.into_inner();
+
+        let pair = inner.next().unwrap();
+        assert_eq!(pair.as_rule(), Rule::key);
+        assert_eq!(pair.as_str(), "id");
+
+        {
+            let mut inner = pair.into_inner();
+            assert_eq!(inner.len(), 1);
+
+            let pair = inner.next().unwrap();
+            assert_eq!(pair.as_rule(), Rule::key_chars);
+            assert_eq!(pair.as_str(), "id");
+        }
+
+        let pair = inner.next().unwrap();
+        assert_eq!(pair.as_rule(), Rule::escaped_value);
+        assert_eq!(pair.as_str(), "123AB");
+    }
+
+    // second tag "rose" with empty value
+    let pair = inner.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::tag);
+
+    {
+        let mut inner = pair.into_inner();
+
+        let pair = inner.next().unwrap();
+        assert_eq!(pair.as_rule(), Rule::key);
+        assert_eq!(pair.as_str(), "rose");
+
+        // no value
+        assert!(inner.next().is_none());
+    }
 }

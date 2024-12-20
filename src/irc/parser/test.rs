@@ -92,3 +92,34 @@ fn test_message_parse_multiple_param() {
         })
     )
 }
+
+#[test]
+fn test_command_with_tags_id_rose() {
+    let res = Message::parse("@id=123AB;rose TEST");
+    assert_eq!(
+        res,
+        Ok(Message {
+            tags: BTreeMap::from([("id".into(), Some("123AB".into())), ("rose".into(), None)]),
+            source: None,
+            command: Command::Cmd("TEST".into()),
+            parameters: vec![],
+        })
+    );
+}
+
+#[test]
+fn test_command_with_tags_url_netsplit() {
+    let res = Message::parse("@url=;netsplit=tur,ty TEST");
+    assert_eq!(
+        res,
+        Ok(Message {
+            tags: BTreeMap::from([
+                ("netsplit".into(), Some("tur,ty".into())),
+                ("url".into(), None),
+            ]),
+            source: None,
+            command: Command::Cmd("TEST".into()),
+            parameters: vec![],
+        })
+    );
+}

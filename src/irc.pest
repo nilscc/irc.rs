@@ -15,13 +15,15 @@ crlf    = _{ "\x0D\x0A" }
 // <vendor>        ::= <host>
 
 tags          = ${ at ~ tag ~ (semicolon ~ tag)* }
-tag           = ${ key ~ "=" ~ value }
-key           = ${ client_prefix? ~ (vendor ~ "/")? }
-value         =  { ANY+ }
+tag           = ${ key ~ (assignment ~ escaped_value?)? }
+key           = ${ client_prefix? ~ (vendor ~ "/")? ~ key_chars }
+key_chars     = @{ (LETTER | NUMBER | "-")+ }
+escaped_value = @{ nospcrlfscl+ }
 vendor        =  { ANY+ }
 client_prefix = _{ "+" }
 
-semicolon = _{ ";" }
+semicolon  = _{ ";" }
+assignment = _{ "=" }
 
 // source          ::=  <servername> / ( <nickname> [ "!" <user> ] [ "@" <host> ] )
 // nick            ::=  <any characters except NUL, CR, LF, chantype
@@ -52,6 +54,7 @@ trailing_inner = @{ nocrlf* }
 colon = _{ ":" }
 
 // TODO: check with unit tests if we really need to explicitely exclude spaces
-nospcrlfcl = { !(" " | "\0" | "\r" | "\n" | ":") ~ ANY }
-nospcrlf   = { !(" " | "\0" | "\r" | "\n") ~ ANY }
-nocrlf     = { !("\0" | "\r" | "\n") ~ ANY }
+nospcrlfscl = { !(" " | "\0" | "\r" | "\n" | ";") ~ ANY }
+nospcrlfcl  = { !(" " | "\0" | "\r" | "\n" | ":") ~ ANY }
+nospcrlf    = { !(" " | "\0" | "\r" | "\n") ~ ANY }
+nocrlf      = { !("\0" | "\r" | "\n") ~ ANY }
