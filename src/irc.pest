@@ -34,10 +34,11 @@ assignment    = _{ "=" }
 // NUL, CR, LF, and SPACE>
 // user            ::=  <sequence of any characters except NUL, CR, LF, and SPACE>
 
-source     = ${ colon ~ name ~ (exclamation ~ user)? ~ (at ~ host)? }
-name       = @{ (!("/" | "!" | "@") ~ nospcrlf)+ } // TODO: hmmm
-user       = @{ (!"@" ~ nospcrlf)+ }
-host       = @{ nospcrlf+ }
+source = ${ colon ~ name ~ (exclamation ~ user)? ~ (at ~ host)? }
+// TODO: hmmm
+name = @{ (!("/" | "!" | "@") ~ nospcrlf)+ }
+user = @{ (!"@" ~ nospcrlf)+ }
+host = @{ nospcrlf+ }
 
 chantype    = _{ "#" | "&" }
 exclamation = _{ "!" }
