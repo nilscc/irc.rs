@@ -1,3 +1,6 @@
+// In comments is the message definition, as defined in the Modern IRCv3 definition:
+// https://modern.ircdocs.horse/#message-format
+
 // message         ::= ['@' <tags> SPACE] [':' <source> SPACE] <command> <parameters> <crlf>
 // SPACE           ::=  %x20 *( %x20 )   ; space character(s)
 // crlf            ::=  %x0D %x0A        ; "carriage return" "linefeed"
