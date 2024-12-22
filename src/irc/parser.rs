@@ -21,7 +21,17 @@ pub struct Message {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Source {}
+pub enum Source {
+    Host(String),
+    User(User),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct User {
+    nick: String,
+    user: Option<String>,
+    host: Option<String>,
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Command {
@@ -67,6 +77,15 @@ impl Message {
                 message: format!("Unexpected rule: {:?}", pair.as_rule()),
             },
             pair.as_span(),
+        )
+    }
+
+    fn empty_pairs(pairs: &Pairs<Rule>) -> Error<Rule> {
+        Error::new_from_pos(
+            ErrorVariant::CustomError {
+                message: "Empty pairs.".into(),
+            },
+            Position::new(pairs.get_input(), 0).unwrap(),
         )
     }
 
@@ -122,8 +141,35 @@ impl Message {
         Ok(tags)
     }
 
-    fn parse_source(_pairs: Pairs<Rule>) -> Result<Source, Error<Rule>> {
-        todo!()
+    fn parse_source(mut pairs: Pairs<Rule>) -> Result<Source, Error<Rule>> {
+        let pair = pairs.next().ok_or(Self::empty_pairs(&pairs))?;
+        print!("{pair:?}");
+
+        if pair.as_rule() != Rule::name {
+            return Err(Self::unexpected_rule(pair));
+        }
+        let name = pair.as_str().to_owned();
+
+        // lookup user and host (if they exist)
+        let mut user = None::<String>;
+        let mut host = None::<String>;
+        for pair in pairs {
+            match pair.as_rule() {
+                Rule::user => user = Some(pair.as_str().to_owned()),
+                Rule::host => host = Some(pair.as_str().to_owned()),
+                _ => return Err(Self::unexpected_rule(pair)),
+            }
+        }
+
+        Ok(if user.is_none() && host.is_none() {
+            Source::Host(name)
+        } else {
+            Source::User(User {
+                nick: name,
+                user,
+                host,
+            })
+        })
     }
 
     fn parse_command(pair: Pair<Rule>) -> Result<Command, Error<Rule>> {

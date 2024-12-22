@@ -1,86 +1,92 @@
+use core::panic;
 use std::collections::BTreeMap;
 
-use crate::irc::parser::Command;
+use super::{Command, Message, Source, User};
 
-use super::Message;
+fn parse(input: &str) -> Message {
+    match Message::parse(input) {
+        Err(err) => panic!("{err}"),
+        Ok(msg) => msg,
+    }
+}
 
 /// Empty input should not deliver valid message
 #[test]
+#[should_panic]
 fn test_message_parse_empty_input() {
-    let res = Message::parse("");
-    assert!(res.is_err());
+    parse("");
 }
 
 /// Simple command with no parameters
 #[test]
 fn test_message_parse_simple_command() {
-    let res = Message::parse("PING");
+    let msg = parse("PING");
     assert_eq!(
-        res,
-        Ok(Message {
+        msg,
+        Message {
             tags: BTreeMap::new(),
             source: None,
             command: Command::Cmd("PING".into()),
             parameters: vec![],
-        })
+        }
     )
 }
 
 /// Simple 3digit command with no parameters
 #[test]
 fn test_message_parse_3digit_command() {
-    let res = Message::parse("001");
+    let msg = parse("001");
     assert_eq!(
-        res,
-        Ok(Message {
+        msg,
+        Message {
             tags: BTreeMap::new(),
             source: None,
             command: Command::Digit3(1),
             parameters: vec![],
-        })
+        }
     );
 
     // check string generation
-    assert_eq!("001", res.unwrap().command.to_string());
+    assert_eq!("001", msg.command.to_string());
 }
 
 /// Simple command with single parameters
 #[test]
 fn test_message_parse_single_param() {
-    let res = Message::parse("NICK nick");
+    let msg = parse("NICK nick");
     assert_eq!(
-        res,
-        Ok(Message {
+        msg,
+        Message {
             tags: BTreeMap::new(),
             source: None,
             command: Command::Cmd("NICK".into()),
             parameters: vec!["nick".into()],
-        })
+        }
     )
 }
 
 /// Simple command with empty trailing parameter
 #[test]
 fn test_message_parse_empty_trailing_param() {
-    let res = Message::parse("TEST :");
+    let msg = parse("TEST :");
     assert_eq!(
-        res,
-        Ok(Message {
+        msg,
+        Message {
             tags: BTreeMap::new(),
             source: None,
             command: Command::Cmd("TEST".into()),
             parameters: vec!["".into()],
-        })
+        }
     )
 }
 
 /// Command with multiple parameters
 #[test]
 fn test_message_parse_multiple_param() {
-    let res = Message::parse("CAP * LS :draft/example-1 draft/example-2");
+    let msg = parse("CAP * LS :draft/example-1 draft/example-2");
     assert_eq!(
-        res,
-        Ok(Message {
+        msg,
+        Message {
             tags: BTreeMap::new(),
             source: None,
             command: Command::Cmd("CAP".into()),
@@ -89,30 +95,30 @@ fn test_message_parse_multiple_param() {
                 "LS".into(),
                 "draft/example-1 draft/example-2".into(),
             ],
-        })
+        }
     )
 }
 
 #[test]
 fn test_command_with_tags_id_rose() {
-    let res = Message::parse("@id=123AB;rose TEST");
+    let msg = parse("@id=123AB;rose TEST");
     assert_eq!(
-        res,
-        Ok(Message {
+        msg,
+        Message {
             tags: BTreeMap::from([("id".into(), Some("123AB".into())), ("rose".into(), None)]),
             source: None,
             command: Command::Cmd("TEST".into()),
             parameters: vec![],
-        })
+        }
     );
 }
 
 #[test]
 fn test_command_with_tags_url_netsplit() {
-    let res = Message::parse("@url=;netsplit=tur,ty TEST");
+    let msg = parse("@url=;netsplit=tur,ty TEST");
     assert_eq!(
-        res,
-        Ok(Message {
+        msg,
+        Message {
             tags: BTreeMap::from([
                 ("netsplit".into(), Some("tur,ty".into())),
                 ("url".into(), None),
@@ -120,6 +126,38 @@ fn test_command_with_tags_url_netsplit() {
             source: None,
             command: Command::Cmd("TEST".into()),
             parameters: vec![],
-        })
+        }
+    );
+}
+
+#[test]
+fn test_source_host() {
+    let msg = parse(":irc.example.com TEST");
+    assert_eq!(
+        msg,
+        Message {
+            tags: BTreeMap::new(),
+            source: Some(Source::Host("irc.example.com".into())),
+            command: Command::Cmd("TEST".into()),
+            parameters: vec![],
+        }
+    );
+}
+
+#[test]
+fn test_source_user() {
+    let msg = parse(":dan!d@localhost TEST");
+    assert_eq!(
+        msg,
+        Message {
+            tags: BTreeMap::new(),
+            source: Some(Source::User(User {
+                nick: "dan".into(),
+                user: Some("d".into()),
+                host: Some("localhost".into()),
+            })),
+            command: Command::Cmd("TEST".into()),
+            parameters: vec![],
+        }
     );
 }
