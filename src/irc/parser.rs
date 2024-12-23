@@ -20,6 +20,57 @@ pub struct Message {
     pub parameters: Vec<String>,
 }
 
+#[derive(Debug)]
+pub enum MessageBuilderError {
+    MultipleTrailingParameters,
+}
+
+pub struct MessageBuilder {
+    message: Message,
+    error: Option<MessageBuilderError>,
+}
+
+impl Message {
+    pub fn new(command: Command) -> Self {
+        Message {
+            command,
+            tags: BTreeMap::new(),
+            source: None,
+            parameters: vec![],
+        }
+    }
+
+    pub fn builder(command: Command) -> MessageBuilder {
+        MessageBuilder {
+            message: Self::new(command),
+            error: None,
+        }
+    }
+
+    pub fn cmd(command: &str) -> MessageBuilder {
+        Self::builder(Command::Cmd(command.into()))
+    }
+}
+
+impl MessageBuilder {
+    pub fn build(self) -> Result<Message, MessageBuilderError> {
+        match self.error {
+            Some(error) => Err(error),
+            None => Ok(self.message),
+        }
+    }
+
+    pub fn param(mut self, parameter: &str) -> MessageBuilder {
+        self.message.parameters.push(parameter.into());
+        self
+    }
+
+    pub fn parameters(mut self, parameters: Vec<String>) -> MessageBuilder {
+        self.message.parameters = parameters;
+        self
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Source {
     Host(String),
