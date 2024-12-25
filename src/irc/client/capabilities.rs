@@ -1,3 +1,6 @@
+/// IRCv3 Capability negotiation, following the spec:
+///
+/// https://ircv3.net/specs/extensions/capability-negotiation.html
 use crate::irc::parser::{Command, Message, MessageBuilderError};
 
 use super::Capability;
@@ -11,17 +14,22 @@ type Messages = Vec<Message>;
 #[derive(Debug)]
 pub enum Error {
     UnexpectedCommand(Command),
+    UnexpectedSubcommand(String),
     MessageBuilderError(MessageBuilderError),
 }
 
 pub struct CapNegotiator {
-    _requested: Vec<Capability>,
+    pub requested: Vec<Capability>,
+    pub acknowledged: Vec<Capability>,
+    pub not_acknowledged: Vec<Capability>,
 }
 
 impl CapNegotiator {
     pub fn request(capabilities: Vec<Capability>) -> Self {
         CapNegotiator {
-            _requested: capabilities,
+            requested: capabilities,
+            acknowledged: vec![],
+            not_acknowledged: vec![],
         }
     }
 
@@ -32,7 +40,11 @@ impl CapNegotiator {
             builder = builder.param(version.as_ref());
         }
 
-        builder.build().unwrap()
+        builder.build()
+    }
+
+    pub fn end(&self) -> Message {
+        Message::cmd("CAP").param("END").build()
     }
 
     pub fn handle(&mut self, message: Message) -> Result {
@@ -44,13 +56,69 @@ impl CapNegotiator {
         let subcmd = &message.parameters[1];
         let param = &message.parameters[2..];
 
-        match subcmd.as_ref() {
-            "LS" => {}
-            _ => {}
-        }
-
         println!("{nick:?} {subcmd:?} {param:?}");
 
+        match subcmd.as_ref() {
+            "LS" => self.match_listed_capabilities(param.to_vec()),
+            "ACK" => self.ack(param.to_vec()),
+            "NAK" => self.nak(param.to_vec()),
+            _ => Err(Error::UnexpectedSubcommand(subcmd.to_string())),
+        }
+    }
+
+    fn match_listed_capabilities(&self, params: Vec<String>) -> Result {
+        let mut request: Vec<String> = vec![];
+
+        // check if input parameters contain any requested capabilities
+        for param in params {
+            for capability in param.split(" ") {
+                let capability = Capability(capability.to_string());
+                if self.requested.contains(&capability) {
+                    request.push(capability.0);
+                }
+            }
+        }
+
+        // do not send unnecessary empty requests
+        if request.is_empty() {
+            Ok(vec![])
+        } else {
+            Ok(vec![Message::cmd("CAP")
+                .param("REQ")
+                .param(&request.join(" "))
+                .build()])
+        }
+    }
+
+    fn nak(&mut self, params: Vec<String>) -> Result {
+        for param in params {
+            for cap in param.split(" ") {
+                // insert capability into list of acknowledged capabilities
+                let cap = Capability(cap.to_string());
+                self.not_acknowledged.push(cap.clone());
+
+                // remove from list of requested capabilities
+                if let Some(requested_idx) = self.requested.iter().position(|c| c == &cap) {
+                    self.requested.swap_remove(requested_idx);
+                }
+            }
+        }
+        Ok(vec![])
+    }
+
+    fn ack(&mut self, params: Vec<String>) -> Result {
+        for param in params {
+            for cap in param.split(" ") {
+                // insert capability into list of acknowledged capabilities
+                let cap = Capability(cap.to_string());
+                self.acknowledged.push(cap.clone());
+
+                // remove from list of requested capabilities
+                if let Some(requested_idx) = self.requested.iter().position(|c| c == &cap) {
+                    self.requested.swap_remove(requested_idx);
+                }
+            }
+        }
         Ok(vec![])
     }
 }

@@ -1,7 +1,4 @@
-use std::{
-    collections::BTreeMap,
-    fmt::{format, Display},
-};
+use std::{collections::BTreeMap, fmt::Display};
 
 use pest::{
     error::{Error, ErrorVariant},
@@ -97,7 +94,6 @@ pub enum MessageBuilderError {
 
 pub struct MessageBuilder {
     message: Message,
-    error: Option<MessageBuilderError>,
 }
 
 impl Message {
@@ -113,7 +109,6 @@ impl Message {
     pub fn builder(command: Command) -> MessageBuilder {
         MessageBuilder {
             message: Self::new(command),
-            error: None,
         }
     }
 
@@ -123,11 +118,8 @@ impl Message {
 }
 
 impl MessageBuilder {
-    pub fn build(self) -> Result<Message, MessageBuilderError> {
-        match self.error {
-            Some(error) => Err(error),
-            None => Ok(self.message),
-        }
+    pub fn build(self) -> Message {
+        self.message
     }
 
     pub fn param(mut self, parameter: &str) -> MessageBuilder {

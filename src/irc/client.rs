@@ -18,10 +18,11 @@ type Messages = Vec<Message>;
 
 impl Client {
     pub fn request_capabilities(_capabilities: Vec<Capability>) -> Result<Messages, Error> {
-        Ok(vec![Message::cmd("CAP").param("LS").build().unwrap()])
+        Ok(vec![Message::cmd("CAP").param("LS").build()])
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Capability(pub String);
 
 pub struct Buffer {}
