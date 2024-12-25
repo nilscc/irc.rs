@@ -1,4 +1,7 @@
-use std::{collections::BTreeMap, fmt::Display};
+use std::{
+    collections::BTreeMap,
+    fmt::{format, Display},
+};
 
 use pest::{
     error::{Error, ErrorVariant},
@@ -18,6 +21,73 @@ pub struct Message {
     pub source: Option<Source>,
     pub command: Command,
     pub parameters: Vec<String>,
+}
+
+impl Display for Message {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // format list of tags
+        if !self.tags.is_empty() {
+            write!(
+                f,
+                "@{} ",
+                self.tags
+                    .iter()
+                    .map(|(key, mval)| format!(
+                        "{key}{}",
+                        mval.clone().map_or(String::new(), |val| format!("={val}"))
+                    ))
+                    .collect::<Vec<String>>()
+                    .join(";")
+            )?;
+        }
+
+        // format source
+        if let Some(src) = &self.source {
+            write!(
+                f,
+                ":{} ",
+                match src {
+                    Source::Host(name) => name.clone(),
+                    Source::User(User { nick, user, host }) => format!(
+                        "{nick}{}{}",
+                        user.clone()
+                            .map_or(String::new(), |user| format!("!{user}")),
+                        host.clone()
+                            .map_or(String::new(), |host| format!("@{host}")),
+                    ),
+                }
+            )?;
+        }
+
+        // format command
+        match &self.command {
+            Command::Cmd(cmd) => write!(f, "{cmd}")?,
+            Command::Digit3(digit3) => write!(f, "{digit3:0>3}")?,
+        }
+
+        // format parameters
+        match &self.parameters[..] {
+            [middle @ .., trailing] => {
+                if !middle.is_empty() {
+                    write!(f, " {}", middle.join(" "))?;
+                }
+                if !trailing.is_empty() {
+                    let prefix = if trailing.contains(" ") { ":" } else { "" };
+                    write!(f, " {prefix}{trailing}")?;
+                }
+            }
+            _ => {}
+        }
+
+        //let len = self.parameters.len();
+        //write!(f, " {}", self.parameters[..len - 1].join(" "))?;
+        //self.parameters.last().map_or(Ok(()), |s| {
+        //    let trailing =
+        //    write!(f, " {trailing}{s}")
+        //})?;
+
+        Ok(())
+    }
 }
 
 #[derive(Debug)]

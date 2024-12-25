@@ -1,4 +1,4 @@
-use super::parser::{Command, Message};
+use super::parser::Message;
 
 pub mod capabilities;
 

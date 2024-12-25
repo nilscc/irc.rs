@@ -20,7 +20,9 @@ fn test_message_parse_empty_input() {
 /// Simple command with no parameters
 #[test]
 fn test_message_parse_simple_command() {
-    let msg = parse("PING");
+    let input = "PING";
+    let msg = parse(input);
+    assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
         Message {
@@ -35,7 +37,9 @@ fn test_message_parse_simple_command() {
 /// Simple 3digit command with no parameters
 #[test]
 fn test_message_parse_3digit_command() {
-    let msg = parse("001");
+    let input = "001";
+    let msg = parse(input);
+    assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
         Message {
@@ -53,7 +57,9 @@ fn test_message_parse_3digit_command() {
 /// Simple command with single parameters
 #[test]
 fn test_message_parse_single_param() {
-    let msg = parse("NICK nick");
+    let input = "NICK nick";
+    let msg = parse(input);
+    assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
         Message {
@@ -69,6 +75,10 @@ fn test_message_parse_single_param() {
 #[test]
 fn test_message_parse_empty_trailing_param() {
     let msg = parse("TEST :");
+
+    // empty trailing parameter does not need to be preserved
+    assert_eq!(msg.to_string(), "TEST");
+
     assert_eq!(
         msg,
         Message {
@@ -83,7 +93,9 @@ fn test_message_parse_empty_trailing_param() {
 /// Command with multiple parameters
 #[test]
 fn test_message_parse_multiple_param() {
-    let msg = parse("CAP * LS :draft/example-1 draft/example-2");
+    let input = "CAP * LS :draft/example-1 draft/example-2";
+    let msg = parse(input);
+    assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
         Message {
@@ -101,7 +113,9 @@ fn test_message_parse_multiple_param() {
 
 #[test]
 fn test_command_with_tags_id_rose() {
-    let msg = parse("@id=123AB;rose TEST");
+    let input = "@id=123AB;rose TEST";
+    let msg = parse(input);
+    assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
         Message {
@@ -132,7 +146,9 @@ fn test_command_with_tags_url_netsplit() {
 
 #[test]
 fn test_source_host() {
-    let msg = parse(":irc.example.com TEST");
+    let input = ":irc.example.com TEST";
+    let msg = parse(input);
+    assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
         Message {
@@ -146,7 +162,9 @@ fn test_source_host() {
 
 #[test]
 fn test_source_user() {
-    let msg = parse(":dan!d@localhost TEST");
+    let input = ":dan!d@localhost TEST";
+    let msg = parse(input);
+    assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
         Message {

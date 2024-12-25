@@ -15,17 +15,17 @@ pub enum Error {
 }
 
 pub struct CapNegotiator {
-    requested: Vec<Capability>,
+    _requested: Vec<Capability>,
 }
 
 impl CapNegotiator {
     pub fn request(capabilities: Vec<Capability>) -> Self {
         CapNegotiator {
-            requested: capabilities,
+            _requested: capabilities,
         }
     }
 
-    pub fn ls(version: Option<String>) -> Message {
+    pub fn ls(&self, version: Option<String>) -> Message {
         let mut builder = Message::cmd("CAP").param("LS");
 
         if let Some(version) = version {
@@ -43,6 +43,11 @@ impl CapNegotiator {
         let nick = &message.parameters[0];
         let subcmd = &message.parameters[1];
         let param = &message.parameters[2..];
+
+        match subcmd.as_ref() {
+            "LS" => {}
+            _ => {}
+        }
 
         println!("{nick:?} {subcmd:?} {param:?}");
 
