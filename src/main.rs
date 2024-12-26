@@ -1,1 +1,1 @@
-use irc::main;
+use irc::ui::main;
