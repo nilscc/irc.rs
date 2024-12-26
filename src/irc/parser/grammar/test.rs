@@ -3,6 +3,46 @@ use pest::Parser;
 use super::{Grammar, Rule};
 
 #[test]
+fn test_nocrlf() {
+    // should allow spaces...
+    let input = String::from("asd asd\n");
+    for char in input.chars() {
+        let s = String::from(char);
+        let res = Grammar::parse(Rule::nocrlf, &s);
+        if s == "\n" {
+            assert!(res.is_err())
+        } else {
+            let mut res = res.unwrap();
+            assert_eq!(res.len(), 1);
+            assert_eq!(res.next().unwrap().as_str(), s);
+        }
+    }
+}
+
+#[test]
+fn test_nospcrlf() {
+    // should skip spaces...
+    let input = String::from("asd asd\n");
+    for char in input.chars() {
+        let s = String::from(char);
+        println!("{s}");
+        let res = Grammar::parse(Rule::nospcrlf, &s);
+        if s == " " || s == "\n" {
+            assert!(res.is_err());
+        } else {
+            let mut res = res.unwrap();
+            assert_eq!(res.len(), 1);
+            assert_eq!(res.next().unwrap().as_str(), s);
+        }
+    }
+    //assert_eq!(res.len(), 3);
+    //for (pair, char) in res.zip(input.chars()) {
+    //    println!("{char}");
+    //    assert_eq!(pair.as_str(), String::from(char));
+    //}
+}
+
+#[test]
 fn test_middle() {
     let mut res = Grammar::parse(Rule::middle, "asd").unwrap();
     let pair = res.next().unwrap();

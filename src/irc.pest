@@ -63,7 +63,7 @@ trailing_inner = @{ nocrlf* }
 colon = _{ ":" }
 
 // TODO: check with unit tests if we really need to explicitely exclude spaces
-nospcrlfscl = { !("\0" | "\r" | "\n" | " " | ";") ~ ANY }
-nospcrlfcl  = { !("\0" | "\r" | "\n" | " " | ":") ~ ANY }
-nospcrlf    = { !("\0" | "\r" | "\n" | " ") ~ ANY }
-nocrlf      = { !("\0" | "\r" | "\n") ~ ANY }
+nospcrlfscl = @{ !("\0" | "\r" | "\n" | " " | ";") ~ ANY }
+nospcrlfcl  = @{ !("\0" | "\r" | "\n" | " " | ":") ~ ANY }
+nospcrlf    = @{ !("\0" | "\r" | "\n" | " ") ~ ANY }
+nocrlf      = @{ !("\0" | "\r" | "\n") ~ ANY }
