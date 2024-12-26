@@ -113,4 +113,8 @@ fn test_multiple_requests() {
         .contains(&Capability("multi-prefix".to_string())));
 
     assert!(negotiator.requested.is_empty());
+
+    let msgs = negotiator.end();
+
+    assert_eq!(msgs.to_string(), "CAP END");
 }
