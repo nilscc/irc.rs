@@ -6,4 +6,7 @@ edition = "2021"
 [dependencies]
 pest = "2.7.15"
 pest_derive = "2.7.15"
+web-sys = { version = "0.3.76", features = ["WebSocket"] }
 yew = { version = "0.21.0", features = ["csr", "hydration", "ssr"] }
+yew-hooks = "0.3.3"
+yew-router = "0.18.0"
