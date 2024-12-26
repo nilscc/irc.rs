@@ -43,6 +43,10 @@ impl CapNegotiator {
         builder.build()
     }
 
+    pub fn list(&self) -> Message {
+        Message::cmd("CAP").param("LIST").build()
+    }
+
     pub fn end(&self) -> Message {
         Message::cmd("CAP").param("END").build()
     }

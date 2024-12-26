@@ -67,3 +67,4 @@ nospcrlfscl = { !("\0" | "\r" | "\n" | " " | ";") ~ ANY }
 nospcrlfcl  = { !("\0" | "\r" | "\n" | " " | ":") ~ ANY }
 nospcrlf    = { !("\0" | "\r" | "\n" | " ") ~ ANY }
 nocrlf      = { !("\0" | "\r" | "\n") ~ ANY }
+

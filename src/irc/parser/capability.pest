@@ -1,0 +1,8 @@
+// capabilities parser
+capability = ${ disabled? ~ cap_key+ ~ (assignment ~ cap_val+)? }
+cap_key    = @{ !"=" ~ nospcrlf }
+cap_val    = @{ nospcrlf }
+
+disabled   = _{ "-" }
+assignment = _{ "=" }
+nospcrlf   = @{ !("\0" | "\r" | "\n") ~ ANY }

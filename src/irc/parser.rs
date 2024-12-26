@@ -6,6 +6,8 @@ use pest::{
     Parser, Position,
 };
 
+pub mod capability;
+
 mod grammar;
 use grammar::{Grammar, Rule};
 
