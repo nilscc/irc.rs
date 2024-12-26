@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use web_sys::WebSocket;
 
 use super::parser::Message;
