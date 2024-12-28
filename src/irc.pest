@@ -84,7 +84,7 @@ cap_cmd  = {
   | cap_del
 }
 cap_ls   = { "LS" ~ multiline? ~ colon ~ capability* }
-cap_list = { "LIST" ~ colon ~ capability* }
+cap_list = { "LIST" ~ multiline? ~ colon ~ capability* }
 cap_ack  = { "ACK" ~ colon ~ capability+ }
 cap_nak  = { "NAK" ~ colon ~ capability+ }
 cap_new  = { "NEW" ~ colon ~ capability+ }
