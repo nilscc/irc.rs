@@ -172,9 +172,11 @@ impl Display for Command {
 
 impl Message {
     pub fn parse(str: &str) -> Result<Self, Error<Rule>> {
-        let mut pairs = Grammar::parse(Rule::message, str)?;
+        let mut pairs = Grammar::parse(Rule::generic_message, str)?;
         match pairs.next() {
-            Some(pair) if pair.as_rule() == Rule::message => Self::parse_inner(pair.into_inner()),
+            Some(pair) if pair.as_rule() == Rule::generic_message => {
+                Self::parse_inner(pair.into_inner())
+            }
             _ => Err(Error::new_from_pos(
                 pest::error::ErrorVariant::CustomError {
                     message: "Failed.".into(),

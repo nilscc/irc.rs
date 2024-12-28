@@ -7,8 +7,8 @@
 
 WHITESPACE = _{ " " }
 
-message =  { tags? ~ source? ~ command ~ parameters ~ crlf? }
-crlf    = _{ "\x0D\x0A" }
+generic_message =  { tags? ~ source? ~ command ~ parameters ~ crlf? }
+crlf            = _{ "\x0D\x0A" }
 
 // <tags>          ::= <tag> [';' <tag>]*
 // <tag>           ::= <key> ['=' <escaped value>]
