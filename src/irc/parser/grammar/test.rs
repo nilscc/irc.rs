@@ -145,3 +145,95 @@ fn test_tags() {
         assert!(inner.next().is_none());
     }
 }
+
+#[test]
+fn test_msg_cap_single() {
+    let mut res = Grammar::parse(Rule::msg_cap, "CAP * LS :sasl").unwrap();
+    let mut inner = res.next().unwrap().into_inner();
+
+    let pair = inner.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::cap_nick);
+    assert_eq!(pair.as_str(), "*");
+
+    let pair = inner.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::cap_cmd);
+    assert_eq!(pair.as_str(), "LS :sasl");
+
+    {
+        let mut inner = pair.into_inner();
+        let pair = inner.next().unwrap();
+        assert_eq!(pair.as_rule(), Rule::cap_ls);
+        assert_eq!(pair.as_str(), "LS :sasl");
+
+        {
+            let mut inner = pair.into_inner();
+            let pair = inner.next().unwrap();
+            assert_eq!(pair.as_rule(), Rule::capability);
+            assert_eq!(pair.as_str(), "sasl");
+        }
+    }
+}
+
+#[test]
+fn test_msg_cap_multi_key_value_pair() {
+    let input = "CAP * LS :multi-prefix sasl=PLAIN,EXTERNAL";
+    let mut res = Grammar::parse(Rule::msg_cap, input).unwrap();
+    let mut inner = res.next().unwrap().into_inner();
+
+    let pair = inner.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::cap_nick);
+    assert_eq!(pair.as_str(), "*");
+
+    let pair = inner.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::cap_cmd);
+    assert_eq!(pair.as_str(), "LS :multi-prefix sasl=PLAIN,EXTERNAL");
+
+    {
+        let mut inner = pair.into_inner();
+        let pair = inner.next().unwrap();
+        assert_eq!(pair.as_rule(), Rule::cap_ls);
+
+        {
+            let mut inner = pair.into_inner();
+            let pair = inner.next().unwrap();
+            assert_eq!(pair.as_rule(), Rule::capability);
+            assert_eq!(pair.as_str(), "multi-prefix");
+            {
+                let mut inner = pair.into_inner();
+                assert_eq!(inner.len(), 1);
+                let pair = inner.next().unwrap();
+                assert_eq!(pair.as_rule(), Rule::cap_key);
+                assert_eq!(pair.as_str(), "multi-prefix");
+            }
+
+            let pair = inner.next().unwrap();
+            assert_eq!(pair.as_rule(), Rule::capability);
+            assert_eq!(pair.as_str(), "sasl=PLAIN,EXTERNAL");
+            {
+                let mut inner = pair.into_inner();
+                assert_eq!(inner.len(), 2);
+
+                let pair = inner.next().unwrap();
+                assert_eq!(pair.as_rule(), Rule::cap_key);
+                assert_eq!(pair.as_str(), "sasl");
+
+                let pair = inner.next().unwrap();
+                assert_eq!(pair.as_rule(), Rule::cap_values);
+                assert_eq!(pair.as_str(), "PLAIN,EXTERNAL");
+
+                {
+                    let mut inner = pair.into_inner();
+                    assert_eq!(inner.len(), 2);
+
+                    let pair = inner.next().unwrap();
+                    assert_eq!(pair.as_rule(), Rule::cap_value);
+                    assert_eq!(pair.as_str(), "PLAIN");
+
+                    let pair = inner.next().unwrap();
+                    assert_eq!(pair.as_rule(), Rule::cap_value);
+                    assert_eq!(pair.as_str(), "EXTERNAL");
+                }
+            }
+        }
+    }
+}
