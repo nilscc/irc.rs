@@ -3,7 +3,13 @@ mod buffer_view;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::irc::client::{Buffer, Client};
+use crate::irc::{
+    client::{
+        buffer::{Buffer, Line},
+        Client,
+    },
+    parser::Source,
+};
 
 use super::{Route, Settings};
 use buffer_view::BufferView;
@@ -16,13 +22,24 @@ pub struct HomeProps {
     pub settings: Option<Settings>,
 }
 
+fn example_buffer() -> Buffer {
+    Buffer {
+        id: 0,
+        name: "test".to_string(),
+        lines: vec![Line {
+            source: Source::Host("localhost".to_string()),
+            message: "moep".into(),
+        }],
+    }
+}
+
 #[function_component]
 pub fn HomePage(props: &HomeProps) -> Html {
     let nav = use_navigator().unwrap();
 
     let client = use_state_eq(|| Client {
         capabilities: vec![],
-        buffers: vec![Buffer {}],
+        buffers: vec![example_buffer()],
     });
 
     if props.settings.is_none() {
@@ -32,7 +49,7 @@ pub fn HomePage(props: &HomeProps) -> Html {
         }
     } else {
         html! {
-            <BufferView buffers={client.buffers.clone()} />
+            <BufferView buffer={client.buffers[0].clone()} />
         }
     }
 }

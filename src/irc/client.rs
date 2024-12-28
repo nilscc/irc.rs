@@ -1,11 +1,13 @@
-use web_sys::WebSocket;
-
-use super::parser::Message;
-
+pub mod buffer;
 pub mod capabilities;
 
 #[cfg(test)]
 mod test;
+
+use buffer::Buffer;
+use web_sys::WebSocket;
+
+use super::parser::Message;
 
 pub trait Socket {
     type Error;
@@ -52,6 +54,3 @@ impl Client {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Capability(pub String);
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Buffer {}
