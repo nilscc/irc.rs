@@ -83,7 +83,7 @@ cap_cmd  = {
   | cap_new
   | cap_del
 }
-cap_ls   = { "LS" ~ colon ~ capability* }
+cap_ls   = { "LS" ~ multiline? ~ colon ~ capability* }
 cap_list = { "LIST" ~ colon ~ capability* }
 cap_ack  = { "ACK" ~ colon ~ capability+ }
 cap_nak  = { "NAK" ~ colon ~ capability+ }
@@ -94,6 +94,8 @@ capability = ${ minus? ~ cap_key ~ (assignment ~ cap_values)? }
 cap_key    = @{ (!"=" ~ nospcrlf)+ }
 cap_values = ${ cap_value ~ ("," ~ cap_value)* }
 cap_value  = @{ (!"," ~ nospcrlf)+ }
+
+multiline = @{ star }
 
 star  = { "*" }
 minus = { "-" }

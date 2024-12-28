@@ -237,3 +237,36 @@ fn test_msg_cap_multi_key_value_pair() {
         }
     }
 }
+
+#[test]
+fn test_msg_cap_multiline() {
+    let input = "CAP * LS * :multi-prefix extended-join account-notify batch invite-notify tls";
+
+    let mut res = Grammar::parse(Rule::msg_cap, input).unwrap();
+    let mut inner = res.next().unwrap().into_inner();
+
+    let pair = inner.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::cap_nick);
+    assert_eq!(pair.as_str(), "*");
+
+    let pair = inner.next().unwrap();
+    assert_eq!(pair.as_rule(), Rule::cap_cmd);
+    {
+        let mut inner = pair.into_inner();
+        let pair = inner.next().unwrap();
+        assert_eq!(pair.as_rule(), Rule::cap_ls);
+
+        {
+            let mut inner = pair.into_inner();
+            assert_eq!(inner.len(), 7);
+
+            let pair = inner.next().unwrap();
+            assert_eq!(pair.as_rule(), Rule::multiline);
+            assert_eq!(pair.into_inner().len(), 0);
+
+            let pair = inner.next().unwrap();
+            assert_eq!(pair.as_rule(), Rule::capability);
+            // etc...
+        }
+    }
+}
