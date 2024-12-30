@@ -40,10 +40,21 @@ pub fn SettingsPage(props: &SettingsProps) -> Html {
 
     html! {
         <form {onsubmit}>
-            <h1>{ "Settings" }</h1>
-            <label for="host">{ "Host name:" }</label>
-            <input ref={host_ref} id="host" type="text" value={host} />
-            <input type="submit" />
+            <h1
+                class="text-2xl font-bold mb-4"
+                >{ "Settings" }</h1>
+            <label
+                class="mr-4"
+                for="host">{ "Host name:" }</label>
+            <input
+                class="bg-slate-900 p-2 rounded-md border-slate-50 outline-none focus:ring-slate-600 focus:ring-1"
+                ref={host_ref} id="host" type="text" value={host}
+                />
+            <input
+                class="block rounded-md bg-slate-600 shadow-red-50 py-2 px-4 mt-2 text-white font-bold cursor-pointer hover:bg-slate-500"
+                type="submit"
+                value="Save"
+                />
         </form>
     }
 }
