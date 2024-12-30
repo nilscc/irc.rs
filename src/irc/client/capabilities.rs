@@ -1,3 +1,5 @@
+use yew::AttrValue;
+
 /// IRCv3 Capability negotiation, following the spec:
 ///
 /// https://ircv3.net/specs/extensions/capability-negotiation.html
@@ -66,13 +68,13 @@ impl CapNegotiator {
         }
     }
 
-    fn match_listed_capabilities(&self, params: Vec<String>) -> Result {
-        let mut request: Vec<String> = vec![];
+    fn match_listed_capabilities(&self, params: Vec<AttrValue>) -> Result {
+        let mut request: Vec<AttrValue> = vec![];
 
         // check if input parameters contain any requested capabilities
         for param in params {
             for capability in param.split(" ") {
-                let capability = Capability(capability.to_string());
+                let capability = Capability(capability.to_string().into());
                 if self.requested.contains(&capability) {
                     request.push(capability.0);
                 }
@@ -90,11 +92,11 @@ impl CapNegotiator {
         }
     }
 
-    fn nak(&mut self, params: Vec<String>) -> Result {
+    fn nak(&mut self, params: Vec<AttrValue>) -> Result {
         for param in params {
             for cap in param.split(" ") {
                 // insert capability into list of acknowledged capabilities
-                let cap = Capability(cap.to_string());
+                let cap = Capability(cap.to_string().into());
                 self.not_acknowledged.push(cap.clone());
 
                 // remove from list of requested capabilities
@@ -106,11 +108,11 @@ impl CapNegotiator {
         Ok(vec![])
     }
 
-    fn ack(&mut self, params: Vec<String>) -> Result {
+    fn ack(&mut self, params: Vec<AttrValue>) -> Result {
         for param in params {
             for cap in param.split(" ") {
                 // insert capability into list of acknowledged capabilities
-                let cap = Capability(cap.to_string());
+                let cap = Capability(cap.to_string().into());
                 self.acknowledged.push(cap.clone());
 
                 // remove from list of requested capabilities

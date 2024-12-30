@@ -6,6 +6,7 @@ mod test;
 
 use buffer::Buffer;
 use web_sys::WebSocket;
+use yew::AttrValue;
 
 use super::parser::Message;
 
@@ -53,4 +54,4 @@ impl Client {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Capability(pub String);
+pub struct Capability(pub AttrValue);

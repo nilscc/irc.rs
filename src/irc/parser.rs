@@ -8,6 +8,7 @@ use pest::{
 
 mod grammar;
 use grammar::{Grammar, Rule};
+use yew::AttrValue;
 
 #[cfg(test)]
 mod test;
@@ -17,7 +18,7 @@ pub struct Message {
     pub tags: BTreeMap<String, Option<String>>,
     pub source: Option<Source>,
     pub command: Command,
-    pub parameters: Vec<String>,
+    pub parameters: Vec<AttrValue>,
 }
 
 impl Display for Message {
@@ -44,7 +45,7 @@ impl Display for Message {
                 f,
                 ":{} ",
                 match src {
-                    Source::Host(name) => name.clone(),
+                    Source::Host(name) => name.to_string(),
                     Source::User(User { nick, user, host }) => format!(
                         "{nick}{}{}",
                         user.clone()
@@ -123,11 +124,11 @@ impl MessageBuilder {
     }
 
     pub fn param(mut self, parameter: &str) -> MessageBuilder {
-        self.message.parameters.push(parameter.into());
+        self.message.parameters.push(parameter.to_owned().into());
         self
     }
 
-    pub fn parameters(mut self, parameters: Vec<String>) -> MessageBuilder {
+    pub fn parameters(mut self, parameters: Vec<AttrValue>) -> MessageBuilder {
         self.message.parameters = parameters;
         self
     }
@@ -135,15 +136,15 @@ impl MessageBuilder {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Source {
-    Host(String),
+    Host(AttrValue),
     User(User),
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct User {
-    pub nick: String,
-    pub user: Option<String>,
-    pub host: Option<String>,
+    pub nick: AttrValue,
+    pub user: Option<AttrValue>,
+    pub host: Option<AttrValue>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -263,15 +264,15 @@ impl Message {
         if pair.as_rule() != Rule::name {
             return Err(Self::unexpected_rule(pair));
         }
-        let name = pair.as_str().to_owned();
+        let name = pair.as_str().to_owned().into();
 
         // lookup user and host (if they exist)
-        let mut user = None::<String>;
-        let mut host = None::<String>;
+        let mut user = None::<AttrValue>;
+        let mut host = None::<AttrValue>;
         for pair in pairs {
             match pair.as_rule() {
-                Rule::user => user = Some(pair.as_str().to_owned()),
-                Rule::host => host = Some(pair.as_str().to_owned()),
+                Rule::user => user = Some(pair.as_str().to_owned().into()),
+                Rule::host => host = Some(pair.as_str().to_owned().into()),
                 _ => return Err(Self::unexpected_rule(pair)),
             }
         }
@@ -295,13 +296,13 @@ impl Message {
         }
     }
 
-    fn parse_parameters(pairs: Pairs<Rule>) -> Result<Vec<String>, Error<Rule>> {
-        let mut params = Vec::<String>::new();
+    fn parse_parameters(pairs: Pairs<Rule>) -> Result<Vec<AttrValue>, Error<Rule>> {
+        let mut params = Vec::<AttrValue>::new();
         for pair in pairs {
             match pair.as_rule() {
-                Rule::middle => params.push(pair.as_str().to_owned()),
+                Rule::middle => params.push(pair.as_str().to_owned().into()),
                 Rule::trailing => {
-                    params.push(pair.into_inner().next().unwrap().as_str().to_owned())
+                    params.push(pair.into_inner().next().unwrap().as_str().to_owned().into())
                 }
                 _ => return Err(Self::unexpected_rule(pair)),
             }

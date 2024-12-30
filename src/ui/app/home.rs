@@ -25,12 +25,12 @@ pub struct HomeProps {
 fn example_buffer() -> Buffer {
     Buffer {
         id: 0,
-        name: "#helloworld".to_string(),
-        motd: Some("Hello world! This is a strange place to be.".to_string()),
+        name: "#helloworld".into(),
+        motd: Some("Hello world! This is a strange place to be.".into()),
         lines: vec![
             Line {
                 id: 0,
-                source: Source::Host("localhost".to_string()),
+                source: Source::Host("localhost".into()),
                 message: "moep".into(),
             },
             Line {

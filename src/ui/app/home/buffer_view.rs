@@ -57,9 +57,9 @@ pub fn BufferView(props: &BufferViewProps) -> Html {
 
 #[derive(Debug, PartialEq, Properties)]
 struct TitleProps {
-    name: String,
+    name: AttrValue,
     #[prop_or_default]
-    motd: Option<String>,
+    motd: Option<AttrValue>,
 }
 
 #[function_component]
