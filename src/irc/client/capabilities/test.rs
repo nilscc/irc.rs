@@ -95,7 +95,7 @@ fn test_multiple_requests() {
 
     assert!(negotiator
         .acknowledged
-        .contains(&Capability("sasl".to_string())));
+        .contains(&Capability("sasl".to_string().into())));
 
     let msgs = negotiator
         .handle(
@@ -110,7 +110,7 @@ fn test_multiple_requests() {
 
     assert!(negotiator
         .not_acknowledged
-        .contains(&Capability("multi-prefix".to_string())));
+        .contains(&Capability("multi-prefix".to_string().into())));
 
     assert!(negotiator.requested.is_empty());
 

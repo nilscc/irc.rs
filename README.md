@@ -18,3 +18,30 @@ Native Rust IRC client for the web with a minimal set of dependencies.
 [serde.rs]: https://serde.rs/
 [tailwindcss]: https://tailwindcss.com/
 [heroicons]: https://heroicons.com/
+
+There are also a bunch of development dependencies:
+
+* [websocket] for testing IRC websocket clients against real servers
+* [dotenv] for defining e.g. host address and passwords
+
+[websocket]: https://docs.rs/websocket/latest/websocket/
+[dotenv]: https://docs.rs/dotenv/latest/dotenv/
+
+# Testing
+
+Tests requiring a [dotenv] environment will be ignored by default, as to not
+cause any issues in e.g. github actions. To run them use the following command:
+
+```bash
+cargo test -- --ignored
+```
+
+For these to work, define your own `.env` file in the source directory. As
+template use:
+
+```
+WEBSOCKET_HOST="wss://..."
+WEBSOCKET_PASSWORD="..."
+```
+
+Make sure to use `wss://` protocol to not transmit any clear text passwords!
