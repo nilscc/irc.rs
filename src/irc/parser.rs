@@ -141,9 +141,9 @@ pub enum Source {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct User {
-    nick: String,
-    user: Option<String>,
-    host: Option<String>,
+    pub nick: String,
+    pub user: Option<String>,
+    pub host: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -8,7 +8,7 @@ use crate::irc::{
         buffer::{Buffer, Line},
         Client,
     },
-    parser::Source,
+    parser::{Source, User},
 };
 
 use super::{Route, Settings};
@@ -25,11 +25,24 @@ pub struct HomeProps {
 fn example_buffer() -> Buffer {
     Buffer {
         id: 0,
-        name: "test".to_string(),
-        lines: vec![Line {
-            source: Source::Host("localhost".to_string()),
-            message: "moep".into(),
-        }],
+        name: "#helloworld".to_string(),
+        motd: Some("Hello world! This is a strange place to be.".to_string()),
+        lines: vec![
+            Line {
+                id: 0,
+                source: Source::Host("localhost".to_string()),
+                message: "moep".into(),
+            },
+            Line {
+                id: 1,
+                source: Source::User(User {
+                    nick: "McManiaC".into(),
+                    user: None,
+                    host: None,
+                }),
+                message: "Hello world!".into(),
+            },
+        ],
     }
 }
 
@@ -50,7 +63,7 @@ pub fn HomePage(props: &HomeProps) -> Html {
     } else {
         html! {
             <main
-                class="flex flex-row w-screen h-screen"
+                class="flex flex-row w-full h-full"
                 >
                 <BufferView buffer={client.buffers[0].clone()} />
             </main>
