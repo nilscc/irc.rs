@@ -49,7 +49,11 @@ pub fn HomePage(props: &HomeProps) -> Html {
         }
     } else {
         html! {
-            <BufferView buffer={client.buffers[0].clone()} />
+            <main
+                class="flex flex-row w-screen h-screen"
+                >
+                <BufferView buffer={client.buffers[0].clone()} />
+            </main>
         }
     }
 }
