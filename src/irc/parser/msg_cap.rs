@@ -1,12 +1,11 @@
-use core::panic;
 use std::fmt::{Display, Formatter};
 
 use pest::{error::Error, iterators::Pairs};
 use yew::AttrValue;
 
-use crate::irc::client::capabilities::{self, Capability};
+use crate::irc::client::capabilities::Capability;
 
-use super::{grammar::Rule, too_many_pairs, unexpected_rule};
+use super::{grammar::Rule, unexpected_rule};
 
 #[cfg(test)]
 mod test;
