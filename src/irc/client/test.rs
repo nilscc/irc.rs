@@ -1,6 +1,8 @@
 use websocket::{stream::sync::NetworkStream, sync::Client, ClientBuilder, OwnedMessage};
 
-use super::{capabilities::CapNegotiator, Capability};
+use crate::irc::parser::capability::Capability;
+
+use super::cap_negotiator::CapNegotiator;
 
 fn connect() -> Client<Box<dyn NetworkStream + Send>> {
     let host = dotenv::var("WEBSOCKET_HOST").expect("");

@@ -1,13 +1,13 @@
 pub mod buffer;
-pub mod capabilities;
+pub mod cap_negotiator;
 
 #[cfg(test)]
 mod test;
 
 use buffer::Buffer;
-use capabilities::{CapNegotiator, Capability};
+use cap_negotiator::CapNegotiator;
 
-use super::parser::Message;
+use super::parser::{capability::Capability, Message};
 
 #[derive(Debug, PartialEq, Clone)]
 enum ClientState {

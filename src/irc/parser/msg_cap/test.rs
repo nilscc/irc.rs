@@ -2,12 +2,10 @@ use core::panic;
 
 use pest::Parser;
 
-use crate::irc::{
-    client::capabilities::Capability,
-    parser::{
-        grammar::{Grammar, Rule},
-        msg_cap::{CapNick, SubCommand},
-    },
+use crate::irc::parser::{
+    capability::Capability,
+    grammar::{Grammar, Rule},
+    msg_cap::{CapNick, SubCommand},
 };
 
 use super::MsgCap;

@@ -3,9 +3,7 @@ use std::fmt::{Display, Formatter};
 use pest::{error::Error, iterators::Pairs};
 use yew::AttrValue;
 
-use crate::irc::client::capabilities::Capability;
-
-use super::{grammar::Rule, unexpected_rule};
+use super::{capability::Capability, grammar::Rule, unexpected_rule};
 
 #[cfg(test)]
 mod test;

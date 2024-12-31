@@ -16,6 +16,8 @@ use yew::AttrValue;
 pub mod generic_message;
 pub mod msg_cap;
 
+pub mod capability;
+
 #[cfg(test)]
 mod test;
 

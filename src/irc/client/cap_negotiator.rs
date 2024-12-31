@@ -1,51 +1,15 @@
-use std::fmt::Display;
-
 use yew::AttrValue;
 
 /// IRCv3 Capability negotiation, following the spec:
 ///
 /// https://ircv3.net/specs/extensions/capability-negotiation.html
-use crate::irc::parser::{Command, Message, MessageBuilderError};
+use crate::irc::parser::{capability::Capability, Command, Message, MessageBuilderError};
 
 #[cfg(test)]
 mod test;
 
 type Result = std::result::Result<Messages, Error>;
 type Messages = Vec<Message>;
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Capability {
-    Single(AttrValue),
-    Values(AttrValue, Vec<AttrValue>),
-    Disabled(AttrValue),
-}
-
-impl Capability {
-    pub fn new(value: &str) -> Self {
-        Capability::Single(value.to_owned().into())
-    }
-
-    pub fn values(key: &str, values: Vec<&'static str>) -> Self {
-        Capability::Values(
-            key.to_owned().into(),
-            values.iter().map(|s| s.to_owned().into()).collect(),
-        )
-    }
-
-    pub fn disabled(value: &str) -> Self {
-        Capability::Disabled(value.to_owned().into())
-    }
-}
-
-impl Display for Capability {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Capability::Single(val) => write!(f, "{val}"),
-            Capability::Disabled(val) => write!(f, "-{val}"),
-            Capability::Values(key, values) => write!(f, "{key}={}", values.join(",")),
-        }
-    }
-}
 
 #[derive(Debug)]
 pub enum Error {
