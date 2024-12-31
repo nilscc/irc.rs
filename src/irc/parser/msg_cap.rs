@@ -35,7 +35,7 @@ pub type Capabilities = Vec<Capability>;
 #[derive(Debug, PartialEq, Clone)]
 pub enum SubCommand {
     LS(Multiline, Capabilities),
-    LIST(Multiline, Capability),
+    LIST(Multiline, Capabilities),
     REQ(Capabilities),
     ACK(Capabilities),
     NAK(Capabilities),
