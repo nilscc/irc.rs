@@ -5,13 +5,20 @@ use yew::AttrValue;
 /// https://ircv3.net/specs/extensions/capability-negotiation.html
 use crate::irc::parser::{Command, Message, MessageBuilderError};
 
-use super::Capability;
-
 #[cfg(test)]
 mod test;
 
 type Result = std::result::Result<Messages, Error>;
 type Messages = Vec<Message>;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Capability(pub AttrValue);
+
+impl Capability {
+    pub fn new(value: &str) -> Self {
+        Capability(value.to_owned().into())
+    }
+}
 
 #[derive(Debug)]
 pub enum Error {
@@ -20,6 +27,7 @@ pub enum Error {
     MessageBuilderError(MessageBuilderError),
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct CapNegotiator {
     pub requested: Vec<Capability>,
     pub acknowledged: Vec<Capability>,
@@ -35,7 +43,7 @@ impl CapNegotiator {
         }
     }
 
-    pub fn ls(&self, version: Option<String>) -> Message {
+    pub fn ls(&self, version: Option<&str>) -> Message {
         let mut builder = Message::cmd("CAP").param("LS");
 
         if let Some(version) = version {

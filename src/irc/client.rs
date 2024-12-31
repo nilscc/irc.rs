@@ -5,53 +5,47 @@ pub mod capabilities;
 mod test;
 
 use buffer::Buffer;
-use web_sys::WebSocket;
-use yew::AttrValue;
+use capabilities::{CapNegotiator, Capability};
 
 use super::parser::Message;
 
-pub trait Socket {
-    type Error;
-
-    fn new(host: &str) -> Result<Self, Self::Error>
-    where
-        Self: Sized;
-}
-
-impl Socket for WebSocket {
-    type Error = ();
-    fn new(host: &str) -> Result<Self, Error> {
-        match WebSocket::new(host) {
-            Ok(ws) => Ok(ws),
-            Err(_) => Err(()),
-        }
-    }
+#[derive(Debug, PartialEq, Clone)]
+enum ClientState {
+    PreCapLs,
+    CapLs,
+    //CapReq,
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Error {}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Client {
-    pub capabilities: Vec<Capability>,
+    state: ClientState,
+    cap_negotiator: CapNegotiator,
     pub buffers: Vec<Buffer>,
 }
 
-// TODO: proper error type
-type Error = ();
-
-///
-type Messages = Vec<Message>;
-
 impl Client {
+    // Supported list of capabilities
+    pub fn supported_capabilities() -> Vec<Capability> {
+        vec![Capability::new("sasl")]
+    }
+
     pub fn new() -> Self {
         Client {
-            capabilities: vec![],
+            state: ClientState::PreCapLs,
+            cap_negotiator: CapNegotiator::request(Self::supported_capabilities()),
             buffers: vec![],
         }
     }
 
-    pub fn request_capabilities(_capabilities: Vec<Capability>) -> Result<Messages, Error> {
-        Ok(vec![Message::cmd("CAP").param("LS").build()])
+    pub fn request_capabilities(&mut self) -> Message {
+        self.state = ClientState::CapLs;
+        self.cap_negotiator.ls(Some("302"))
+    }
+
+    pub fn handle(&mut self, _message: &Message) -> Result<(), Error> {
+        Ok(())
     }
 }
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Capability(pub AttrValue);

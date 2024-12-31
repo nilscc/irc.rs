@@ -50,9 +50,10 @@ fn example_buffer() -> Buffer {
 pub fn HomePage(props: &HomeProps) -> Html {
     let nav = use_navigator().unwrap();
 
-    let client = use_state_eq(|| Client {
-        capabilities: vec![],
-        buffers: vec![example_buffer()],
+    let client = use_state_eq(|| {
+        let mut c = Client::new();
+        c.buffers.push(example_buffer());
+        c
     });
 
     if props.settings.is_none() {
