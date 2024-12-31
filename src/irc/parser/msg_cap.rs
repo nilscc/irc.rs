@@ -103,6 +103,7 @@ impl MsgCap {
             match pair.as_rule() {
                 Rule::minus => disabled = true,
                 Rule::cap_key => key = pair.as_str(),
+                Rule::assignment => (),
                 Rule::cap_values => {
                     for pair in pair.into_inner() {
                         match pair.as_rule() {
@@ -126,7 +127,26 @@ impl MsgCap {
 }
 
 impl Display for MsgCap {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        todo!("{self:?}")
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let nick = match &self.nick {
+            CapNick::Star => "*",
+            CapNick::Nick(nick) => nick,
+        };
+        let sub_command = match &self.sub_command {
+            SubCommand::LS(multiline, capabilities) => {
+                format!(
+                    "LS {}:{}",
+                    if *multiline { "* " } else { "" },
+                    capabilities
+                        .iter()
+                        .map(|c| c.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                )
+            }
+            c => todo!("{c:?}"),
+        };
+
+        write!(f, "CAP {nick} {sub_command}")
     }
 }

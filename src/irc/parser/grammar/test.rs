@@ -126,6 +126,9 @@ fn test_tags() {
         }
 
         let pair = inner.next().unwrap();
+        assert_eq!(pair.as_rule(), Rule::assignment);
+
+        let pair = inner.next().unwrap();
         assert_eq!(pair.as_rule(), Rule::escaped_value);
         assert_eq!(pair.as_str(), "123AB");
     }
@@ -211,11 +214,14 @@ fn test_msg_cap_multi_key_value_pair() {
             assert_eq!(pair.as_str(), "sasl=PLAIN,EXTERNAL");
             {
                 let mut inner = pair.into_inner();
-                assert_eq!(inner.len(), 2);
+                assert_eq!(inner.len(), 3);
 
                 let pair = inner.next().unwrap();
                 assert_eq!(pair.as_rule(), Rule::cap_key);
                 assert_eq!(pair.as_str(), "sasl");
+
+                let pair = inner.next().unwrap();
+                assert_eq!(pair.as_rule(), Rule::assignment);
 
                 let pair = inner.next().unwrap();
                 assert_eq!(pair.as_rule(), Rule::cap_values);

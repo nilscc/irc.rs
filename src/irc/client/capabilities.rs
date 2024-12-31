@@ -38,8 +38,12 @@ impl Capability {
 }
 
 impl Display for Capability {
-    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Capability::Single(val) => write!(f, "{val}"),
+            Capability::Disabled(val) => write!(f, "-{val}"),
+            Capability::Values(key, values) => write!(f, "{key}={}", values.join(",")),
+        }
     }
 }
 

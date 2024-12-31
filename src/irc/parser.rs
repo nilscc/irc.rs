@@ -269,19 +269,18 @@ impl Message {
         for pair in pairs {
             match pair.as_rule() {
                 Rule::tag => {
-                    let mut inner = pair.into_inner();
-                    let key = match inner.next() {
-                        Some(k) if k.as_rule() == Rule::key => k.as_str(),
-                        _ => todo!(),
-                    };
-                    let val = match inner.next() {
-                        // TODO: unescape
-                        Some(v) if v.as_rule() == Rule::escaped_value => {
-                            Some(v.as_str().to_owned())
+                    let mut key = "";
+                    let mut value = None::<String>;
+
+                    for pair in pair.into_inner() {
+                        match pair.as_rule() {
+                            Rule::key => key = pair.as_str(),
+                            Rule::assignment => value = Some(String::new()),
+                            Rule::escaped_value => value = Some(pair.as_str().into()),
+                            _ => return Err(unexpected_rule(pair.clone())),
                         }
-                        _ => None,
-                    };
-                    tags.insert(key.to_owned(), val);
+                    }
+                    tags.insert(key.to_owned(), value);
                 }
                 _ => return Err(unexpected_rule(pair.clone())),
             }

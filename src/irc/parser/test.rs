@@ -60,14 +60,13 @@ fn test_message_parse_empty_trailing_param() {
 /// Command with multiple parameters
 #[test]
 fn test_message_parse_multiple_param() {
-    let input = "CAP * LS :draft/example-1 draft/example-2";
+    let input = "TEST * :draft/example-1 draft/example-2";
     let msg = parse(input);
     assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
-        Message::cmd("CAP")
+        Message::cmd("TEST")
             .param("*")
-            .param("LS")
             .param("draft/example-1 draft/example-2")
             .build()
     )
