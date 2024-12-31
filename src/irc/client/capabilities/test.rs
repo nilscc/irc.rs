@@ -29,7 +29,7 @@ fn test_empty_request() {
 
 #[test]
 fn test_sinlge_request() {
-    let mut negotiator = CapNegotiator::request(vec![Capability("sasl".into())]);
+    let mut negotiator = CapNegotiator::request(vec![Capability::new("sasl")]);
     assert_eq!(negotiator.requested.len(), 1);
 
     let ls = negotiator.ls(Some("302".into()));
@@ -56,8 +56,8 @@ fn test_sinlge_request() {
 #[test]
 fn test_multiple_requests() {
     let mut negotiator = CapNegotiator::request(vec![
-        Capability("sasl".into()),
-        Capability("multi-prefix".into()),
+        Capability::new("sasl"),
+        Capability::new("multi-prefix"),
     ]);
     assert_eq!(negotiator.requested.len(), 2);
 
@@ -93,9 +93,7 @@ fn test_multiple_requests() {
         .unwrap();
     assert_eq!(msgs, vec![]);
 
-    assert!(negotiator
-        .acknowledged
-        .contains(&Capability("sasl".to_string().into())));
+    assert!(negotiator.acknowledged.contains(&Capability::new("sasl")));
 
     let msgs = negotiator
         .handle(
@@ -110,7 +108,7 @@ fn test_multiple_requests() {
 
     assert!(negotiator
         .not_acknowledged
-        .contains(&Capability("multi-prefix".to_string().into())));
+        .contains(&Capability::new("multi-prefix")));
 
     assert!(negotiator.requested.is_empty());
 

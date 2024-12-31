@@ -1,7 +1,6 @@
 use core::panic;
-use std::collections::BTreeMap;
 
-use super::{Command, Message, Source, User};
+use super::{Command, Message, User};
 
 fn parse(input: &str) -> Message {
     match Message::parse(input) {
@@ -23,15 +22,7 @@ fn test_message_parse_simple_command() {
     let input = "PING";
     let msg = parse(input);
     assert_eq!(msg.to_string(), input);
-    assert_eq!(
-        msg,
-        Message {
-            tags: BTreeMap::new(),
-            source: None,
-            command: Command::Cmd("PING".into()),
-            parameters: vec![],
-        }
-    )
+    assert_eq!(msg, Message::cmd("PING").build())
 }
 
 /// Simple 3digit command with no parameters
@@ -40,18 +31,10 @@ fn test_message_parse_3digit_command() {
     let input = "001";
     let msg = parse(input);
     assert_eq!(msg.to_string(), input);
-    assert_eq!(
-        msg,
-        Message {
-            tags: BTreeMap::new(),
-            source: None,
-            command: Command::Digit3(1),
-            parameters: vec![],
-        }
-    );
+    assert_eq!(msg, Message::builder(Command::Digit3(1)).build());
 
     // check string generation
-    assert_eq!("001", msg.command.to_string());
+    assert_eq!("001", msg.msg_type.to_string());
 }
 
 /// Simple command with single parameters
@@ -60,15 +43,7 @@ fn test_message_parse_single_param() {
     let input = "NICK nick";
     let msg = parse(input);
     assert_eq!(msg.to_string(), input);
-    assert_eq!(
-        msg,
-        Message {
-            tags: BTreeMap::new(),
-            source: None,
-            command: Command::Cmd("NICK".into()),
-            parameters: vec!["nick".into()],
-        }
-    )
+    assert_eq!(msg, Message::cmd("NICK").param("nick").build());
 }
 
 /// Simple command with empty trailing parameter
@@ -79,15 +54,7 @@ fn test_message_parse_empty_trailing_param() {
     // empty trailing parameter does not need to be preserved
     assert_eq!(msg.to_string(), "TEST");
 
-    assert_eq!(
-        msg,
-        Message {
-            tags: BTreeMap::new(),
-            source: None,
-            command: Command::Cmd("TEST".into()),
-            parameters: vec!["".into()],
-        }
-    )
+    assert_eq!(msg, Message::cmd("TEST").param("").build());
 }
 
 /// Command with multiple parameters
@@ -98,16 +65,11 @@ fn test_message_parse_multiple_param() {
     assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
-        Message {
-            tags: BTreeMap::new(),
-            source: None,
-            command: Command::Cmd("CAP".into()),
-            parameters: vec![
-                "*".into(),
-                "LS".into(),
-                "draft/example-1 draft/example-2".into(),
-            ],
-        }
+        Message::cmd("CAP")
+            .param("*")
+            .param("LS")
+            .param("draft/example-1 draft/example-2")
+            .build()
     )
 }
 
@@ -118,12 +80,10 @@ fn test_command_with_tags_id_rose() {
     assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
-        Message {
-            tags: BTreeMap::from([("id".into(), Some("123AB".into())), ("rose".into(), None)]),
-            source: None,
-            command: Command::Cmd("TEST".into()),
-            parameters: vec![],
-        }
+        Message::cmd("TEST")
+            .tag("id", Some("123AB"))
+            .tag("rose", None)
+            .build()
     );
 }
 
@@ -132,15 +92,10 @@ fn test_command_with_tags_url_netsplit() {
     let msg = parse("@url=;netsplit=tur,ty TEST");
     assert_eq!(
         msg,
-        Message {
-            tags: BTreeMap::from([
-                ("netsplit".into(), Some("tur,ty".into())),
-                ("url".into(), None),
-            ]),
-            source: None,
-            command: Command::Cmd("TEST".into()),
-            parameters: vec![],
-        }
+        Message::cmd("TEST")
+            .tag("url", Some(""))
+            .tag("netsplit", Some("tur,ty"))
+            .build()
     );
 }
 
@@ -149,15 +104,7 @@ fn test_source_host() {
     let input = ":irc.example.com TEST";
     let msg = parse(input);
     assert_eq!(msg.to_string(), input);
-    assert_eq!(
-        msg,
-        Message {
-            tags: BTreeMap::new(),
-            source: Some(Source::Host("irc.example.com".into())),
-            command: Command::Cmd("TEST".into()),
-            parameters: vec![],
-        }
-    );
+    assert_eq!(msg, Message::cmd("TEST").host("irc.example.com").build());
 }
 
 #[test]
@@ -167,15 +114,12 @@ fn test_source_user() {
     assert_eq!(msg.to_string(), input);
     assert_eq!(
         msg,
-        Message {
-            tags: BTreeMap::new(),
-            source: Some(Source::User(User {
+        Message::cmd("TEST")
+            .user(User {
                 nick: "dan".into(),
                 user: Some("d".into()),
-                host: Some("localhost".into()),
-            })),
-            command: Command::Cmd("TEST".into()),
-            parameters: vec![],
-        }
+                host: Some("localhost".into())
+            })
+            .build()
     );
 }

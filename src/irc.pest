@@ -7,8 +7,11 @@
 
 WHITESPACE = _{ " " }
 
-generic_message =  { tags? ~ source? ~ command ~ parameters ~ crlf? }
-crlf            = _{ "\x0D\x0A" }
+message  =  { tags? ~ source? ~ msg_type ~ crlf? }
+crlf     = _{ "\x0D\x0A" }
+msg_type =  { msg_cap | generic_message }
+
+generic_message = { command ~ parameters }
 
 // <tags>          ::= <tag> [';' <tag>]*
 // <tag>           ::= <key> ['=' <escaped value>]
@@ -74,7 +77,7 @@ nocrlf      = @{ !("\0" | "\r" | "\n") ~ ANY }
 // 
 
 msg_cap  = { "CAP" ~ cap_nick ~ cap_cmd }
-cap_nick = { star | nospcrlf+ }
+cap_nick = ${ star | nospcrlf+ }
 cap_cmd  = {
     cap_ls
   | cap_list

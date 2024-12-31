@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use yew::AttrValue;
 
 /// IRCv3 Capability negotiation, following the spec:
@@ -12,11 +14,32 @@ type Result = std::result::Result<Messages, Error>;
 type Messages = Vec<Message>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Capability(pub AttrValue);
+pub enum Capability {
+    Single(AttrValue),
+    Values(AttrValue, Vec<AttrValue>),
+    Disabled(AttrValue),
+}
 
 impl Capability {
     pub fn new(value: &str) -> Self {
-        Capability(value.to_owned().into())
+        Capability::Single(value.to_owned().into())
+    }
+
+    pub fn values(key: &str, values: Vec<&'static str>) -> Self {
+        Capability::Values(
+            key.to_owned().into(),
+            values.iter().map(|s| s.to_owned().into()).collect(),
+        )
+    }
+
+    pub fn disabled(value: &str) -> Self {
+        Capability::Disabled(value.to_owned().into())
+    }
+}
+
+impl Display for Capability {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
     }
 }
 
@@ -57,23 +80,24 @@ impl CapNegotiator {
         Message::cmd("CAP").param("END").build()
     }
 
-    pub fn handle(&mut self, message: Message) -> Result {
-        if Command::Cmd("CAP".into()) != message.command {
-            return Err(Error::UnexpectedCommand(message.command));
-        }
-
-        let nick = &message.parameters[0];
-        let subcmd = &message.parameters[1];
-        let param = &message.parameters[2..];
-
-        println!("{nick:?} {subcmd:?} {param:?}");
-
-        match subcmd.as_ref() {
-            "LS" => self.match_listed_capabilities(param.to_vec()),
-            "ACK" => self.ack(param.to_vec()),
-            "NAK" => self.nak(param.to_vec()),
-            _ => Err(Error::UnexpectedSubcommand(subcmd.to_string())),
-        }
+    pub fn handle(&mut self, _message: Message) -> Result {
+        //    if Command::Cmd("CAP".into()) != message.command {
+        //        return Err(Error::UnexpectedCommand(message.command));
+        //    }
+        //
+        //    let nick = &message.parameters[0];
+        //    let subcmd = &message.parameters[1];
+        //    let param = &message.parameters[2..];
+        //
+        //    println!("{nick:?} {subcmd:?} {param:?}");
+        //
+        //    match subcmd.as_ref() {
+        //        "LS" => self.match_listed_capabilities(param.to_vec()),
+        //        "ACK" => self.ack(param.to_vec()),
+        //        "NAK" => self.nak(param.to_vec()),
+        //        _ => Err(Error::UnexpectedSubcommand(subcmd.to_string())),
+        //    }
+        Ok(vec![])
     }
 
     fn match_listed_capabilities(&self, params: Vec<AttrValue>) -> Result {
@@ -82,9 +106,9 @@ impl CapNegotiator {
         // check if input parameters contain any requested capabilities
         for param in params {
             for capability in param.split(" ") {
-                let capability = Capability(capability.to_string().into());
+                let capability = Capability::new(capability);
                 if self.requested.contains(&capability) {
-                    request.push(capability.0);
+                    request.push(capability.to_string().into());
                 }
             }
         }
@@ -104,7 +128,7 @@ impl CapNegotiator {
         for param in params {
             for cap in param.split(" ") {
                 // insert capability into list of acknowledged capabilities
-                let cap = Capability(cap.to_string().into());
+                let cap = Capability::new(cap);
                 self.not_acknowledged.push(cap.clone());
 
                 // remove from list of requested capabilities
@@ -120,7 +144,7 @@ impl CapNegotiator {
         for param in params {
             for cap in param.split(" ") {
                 // insert capability into list of acknowledged capabilities
-                let cap = Capability(cap.to_string().into());
+                let cap = Capability::new(cap);
                 self.acknowledged.push(cap.clone());
 
                 // remove from list of requested capabilities

@@ -1,5 +1,8 @@
+use core::panic;
 use std::{collections::BTreeMap, fmt::Display};
 
+use generic_message::GenericMessage;
+use msg_cap::MsgCap;
 use pest::{
     error::{Error, ErrorVariant},
     iterators::{Pair, Pairs},
@@ -10,6 +13,9 @@ mod grammar;
 use grammar::{Grammar, Rule};
 use yew::AttrValue;
 
+pub mod generic_message;
+pub mod msg_cap;
+
 #[cfg(test)]
 mod test;
 
@@ -17,8 +23,22 @@ mod test;
 pub struct Message {
     pub tags: BTreeMap<String, Option<String>>,
     pub source: Option<Source>,
-    pub command: Command,
-    pub parameters: Vec<AttrValue>,
+    pub msg_type: MessageType,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum MessageType {
+    Generic(GenericMessage),
+    Capability(MsgCap),
+}
+
+impl Display for MessageType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MessageType::Generic(msg) => write!(f, "{msg}"),
+            MessageType::Capability(cap) => write!(f, "{cap}"),
+        }
+    }
 }
 
 impl Display for Message {
@@ -57,34 +77,7 @@ impl Display for Message {
             )?;
         }
 
-        // format command
-        match &self.command {
-            Command::Cmd(cmd) => write!(f, "{cmd}")?,
-            Command::Digit3(digit3) => write!(f, "{digit3:0>3}")?,
-        }
-
-        // format parameters
-        match &self.parameters[..] {
-            [middle @ .., trailing] => {
-                if !middle.is_empty() {
-                    write!(f, " {}", middle.join(" "))?;
-                }
-                if !trailing.is_empty() {
-                    let prefix = if trailing.contains(" ") { ":" } else { "" };
-                    write!(f, " {prefix}{trailing}")?;
-                }
-            }
-            _ => {}
-        }
-
-        //let len = self.parameters.len();
-        //write!(f, " {}", self.parameters[..len - 1].join(" "))?;
-        //self.parameters.last().map_or(Ok(()), |s| {
-        //    let trailing =
-        //    write!(f, " {trailing}{s}")
-        //})?;
-
-        Ok(())
+        write!(f, "{}", self.msg_type)
     }
 }
 
@@ -100,10 +93,9 @@ pub struct MessageBuilder {
 impl Message {
     pub fn new(command: Command) -> Self {
         Message {
-            command,
             tags: BTreeMap::new(),
             source: None,
-            parameters: vec![],
+            msg_type: MessageType::Generic(GenericMessage::new(command)),
         }
     }
 
@@ -123,13 +115,36 @@ impl MessageBuilder {
         self.message
     }
 
-    pub fn param(mut self, parameter: &str) -> MessageBuilder {
-        self.message.parameters.push(parameter.to_owned().into());
+    pub fn param(mut self, parameter: &str) -> Self {
+        match &mut self.message.msg_type {
+            MessageType::Generic(msg) => msg.parameters.push(parameter.to_owned().into()),
+            _ => panic!("Builder does not support non-generic messages."),
+        }
         self
     }
 
-    pub fn parameters(mut self, parameters: Vec<AttrValue>) -> MessageBuilder {
-        self.message.parameters = parameters;
+    pub fn parameters(mut self, parameters: Vec<AttrValue>) -> Self {
+        match &mut self.message.msg_type {
+            MessageType::Generic(msg) => msg.parameters = parameters,
+            _ => panic!("Builder does not support non-generic messages."),
+        }
+        self
+    }
+
+    pub fn tag(mut self, key: &str, value: Option<&str>) -> Self {
+        self.message
+            .tags
+            .insert(key.to_owned(), value.map(|str| str.to_owned()));
+        self
+    }
+
+    pub fn host(mut self, host: &str) -> Self {
+        self.message.source = Some(Source::Host(host.to_owned().into()));
+        self
+    }
+
+    pub fn user(mut self, user: User) -> Self {
+        self.message.source = Some(Source::User(user));
         self
     }
 }
@@ -171,13 +186,38 @@ impl Display for Command {
     }
 }
 
+fn unexpected_rule(pair: Pair<Rule>) -> Error<Rule> {
+    Error::new_from_span(
+        ErrorVariant::CustomError {
+            message: format!("Unexpected rule: {:?}", pair.as_rule()),
+        },
+        pair.as_span(),
+    )
+}
+
+fn empty_pairs(pairs: &Pairs<Rule>) -> Error<Rule> {
+    Error::new_from_pos(
+        ErrorVariant::CustomError {
+            message: "Empty pairs.".into(),
+        },
+        Position::new(pairs.get_input(), 0).unwrap(),
+    )
+}
+
+fn too_many_pairs(pairs: &Pairs<Rule>, expected: u32) -> Error<Rule> {
+    Error::new_from_pos(
+        ErrorVariant::CustomError {
+            message: format!("Expected {} pairs, have: {}", expected, pairs.len()),
+        },
+        Position::new(pairs.get_input(), 0).unwrap(),
+    )
+}
+
 impl Message {
     pub fn parse(str: &str) -> Result<Self, Error<Rule>> {
-        let mut pairs = Grammar::parse(Rule::generic_message, str)?;
+        let mut pairs = Grammar::parse(Rule::message, str)?;
         match pairs.next() {
-            Some(pair) if pair.as_rule() == Rule::generic_message => {
-                Self::parse_inner(pair.into_inner())
-            }
+            Some(pair) if pair.as_rule() == Rule::message => Self::parse_inner(pair.into_inner()),
             _ => Err(Error::new_from_pos(
                 pest::error::ErrorVariant::CustomError {
                     message: "Failed.".into(),
@@ -187,49 +227,41 @@ impl Message {
         }
     }
 
-    fn unexpected_rule(pair: Pair<Rule>) -> Error<Rule> {
-        Error::new_from_span(
-            ErrorVariant::CustomError {
-                message: format!("Unexpected rule: {:?}", pair.as_rule()),
-            },
-            pair.as_span(),
-        )
-    }
-
-    fn empty_pairs(pairs: &Pairs<Rule>) -> Error<Rule> {
-        Error::new_from_pos(
-            ErrorVariant::CustomError {
-                message: "Empty pairs.".into(),
-            },
-            Position::new(pairs.get_input(), 0).unwrap(),
-        )
-    }
-
     fn parse_inner(pairs: Pairs<Rule>) -> Result<Self, Error<Rule>> {
         let mut tags = BTreeMap::new();
         let mut source = None;
-        let mut parameters = vec![];
-        let mut command = Command::Digit3(0);
+        let mut msg_type = None::<MessageType>;
 
         // parse inner pairs
         for pair in pairs {
             match pair.as_rule() {
                 Rule::tags => tags = Self::parse_tags(pair.into_inner())?,
                 Rule::source => source = Some(Self::parse_source(pair.into_inner())?),
-                Rule::command => command = Self::parse_command(pair)?,
-                Rule::parameters => {
-                    parameters.append(&mut Self::parse_parameters(pair.into_inner())?)
-                }
-                _ => return Err(Self::unexpected_rule(pair)),
+                Rule::msg_type => msg_type = Some(Self::parse_msg_type(pair.into_inner())?),
+                _ => return Err(unexpected_rule(pair)),
             }
         }
 
         Ok(Message {
             tags,
             source,
-            parameters,
-            command,
+            msg_type: msg_type.expect("Missing message type"),
         })
+    }
+
+    fn parse_msg_type(mut pairs: Pairs<Rule>) -> Result<MessageType, Error<Rule>> {
+        if pairs.len() != 1 {
+            return Err(too_many_pairs(&pairs, 1));
+        }
+
+        let pair = pairs.next().unwrap();
+        match pair.as_rule() {
+            Rule::generic_message => Ok(MessageType::Generic(GenericMessage::parse(
+                pair.into_inner(),
+            )?)),
+            Rule::msg_cap => Ok(MessageType::Capability(MsgCap::parse(pair.into_inner())?)),
+            _ => return Err(unexpected_rule(pair)),
+        }
     }
 
     fn parse_tags(pairs: Pairs<Rule>) -> Result<BTreeMap<String, Option<String>>, Error<Rule>> {
@@ -251,18 +283,18 @@ impl Message {
                     };
                     tags.insert(key.to_owned(), val);
                 }
-                _ => return Err(Self::unexpected_rule(pair.clone())),
+                _ => return Err(unexpected_rule(pair.clone())),
             }
         }
         Ok(tags)
     }
 
     fn parse_source(mut pairs: Pairs<Rule>) -> Result<Source, Error<Rule>> {
-        let pair = pairs.next().ok_or(Self::empty_pairs(&pairs))?;
+        let pair = pairs.next().ok_or(empty_pairs(&pairs))?;
         print!("{pair:?}");
 
         if pair.as_rule() != Rule::name {
-            return Err(Self::unexpected_rule(pair));
+            return Err(unexpected_rule(pair));
         }
         let name = pair.as_str().to_owned().into();
 
@@ -273,7 +305,7 @@ impl Message {
             match pair.as_rule() {
                 Rule::user => user = Some(pair.as_str().to_owned().into()),
                 Rule::host => host = Some(pair.as_str().to_owned().into()),
-                _ => return Err(Self::unexpected_rule(pair)),
+                _ => return Err(unexpected_rule(pair)),
             }
         }
 
@@ -286,27 +318,5 @@ impl Message {
                 host,
             })
         })
-    }
-
-    fn parse_command(pair: Pair<Rule>) -> Result<Command, Error<Rule>> {
-        let cmd = pair.as_str().to_owned();
-        match pair.into_inner().next() {
-            Some(val) if val.as_rule() == Rule::digit3 => Ok(Command::Digit3(cmd.parse().unwrap())),
-            _ => Ok(Command::Cmd(cmd)),
-        }
-    }
-
-    fn parse_parameters(pairs: Pairs<Rule>) -> Result<Vec<AttrValue>, Error<Rule>> {
-        let mut params = Vec::<AttrValue>::new();
-        for pair in pairs {
-            match pair.as_rule() {
-                Rule::middle => params.push(pair.as_str().to_owned().into()),
-                Rule::trailing => {
-                    params.push(pair.into_inner().next().unwrap().as_str().to_owned().into())
-                }
-                _ => return Err(Self::unexpected_rule(pair)),
-            }
-        }
-        Ok(params)
     }
 }

@@ -17,7 +17,7 @@ fn connect() -> Client<Box<dyn NetworkStream + Send>> {
 #[ignore = "requires dotenv to be set up."]
 fn integrate_client_with_websocket() {
     let mut client = connect();
-    let capabilities = CapNegotiator::request(vec![Capability("sasl".into())]);
+    let capabilities = CapNegotiator::request(vec![Capability::new("sasl")]);
 
     let msg = capabilities.ls(Some("302".into()));
     client
