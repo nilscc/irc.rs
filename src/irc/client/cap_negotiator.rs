@@ -3,7 +3,9 @@ use yew::AttrValue;
 /// IRCv3 Capability negotiation, following the spec:
 ///
 /// https://ircv3.net/specs/extensions/capability-negotiation.html
-use crate::irc::parser::{capability::Capability, Command, Message, MessageBuilderError};
+use crate::irc::parser::{
+    capability::Capability, msg_cap::MsgCap, Command, Message, MessageBuilderError,
+};
 
 #[cfg(test)]
 mod test;
@@ -48,24 +50,18 @@ impl CapNegotiator {
         Message::cmd("CAP").param("END").build()
     }
 
-    pub fn handle(&mut self, _message: Message) -> Result {
-        //    if Command::Cmd("CAP".into()) != message.command {
-        //        return Err(Error::UnexpectedCommand(message.command));
-        //    }
-        //
-        //    let nick = &message.parameters[0];
-        //    let subcmd = &message.parameters[1];
-        //    let param = &message.parameters[2..];
-        //
-        //    println!("{nick:?} {subcmd:?} {param:?}");
-        //
-        //    match subcmd.as_ref() {
-        //        "LS" => self.match_listed_capabilities(param.to_vec()),
-        //        "ACK" => self.ack(param.to_vec()),
-        //        "NAK" => self.nak(param.to_vec()),
-        //        _ => Err(Error::UnexpectedSubcommand(subcmd.to_string())),
-        //    }
-        Ok(vec![])
+    pub fn handle(&mut self, message: MsgCap) -> Result {
+        let nick = &message.nick;
+        let subcmd = &message.sub_command;
+
+        println!("{nick:?} {subcmd:?}");
+
+        match subcmd {
+            //"LS" => self.match_listed_capabilities(param.to_vec()),
+            //"ACK" => self.ack(param.to_vec()),
+            //"NAK" => self.nak(param.to_vec()),
+            _ => Err(Error::UnexpectedSubcommand(subcmd.to_string())),
+        }
     }
 
     fn match_listed_capabilities(&self, params: Vec<AttrValue>) -> Result {

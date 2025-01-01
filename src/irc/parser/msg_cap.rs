@@ -27,6 +27,7 @@ impl CapNick {
 }
 
 pub type Multiline = bool;
+
 pub type Capabilities = Vec<Capability>;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -40,6 +41,48 @@ pub enum SubCommand {
     DEL(Capabilities),
 }
 
+impl SubCommand {
+    fn join_capabilities(capabilities: &Capabilities) -> String {
+        capabilities
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
+    }
+
+    fn command_name(&self) -> &'static str {
+        use SubCommand::*;
+        match self {
+            LS(_, _) => "LS",
+            LIST(_, _) => "LIST",
+            REQ(_) => "REQ",
+            ACK(_) => "ACK",
+            NAK(_) => "NAK",
+            NEW(_) => "NEW",
+            DEL(_) => "DEL",
+        }
+    }
+}
+
+impl Display for SubCommand {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        use SubCommand::*;
+        match self {
+            LS(multi, caps) | LIST(multi, caps) => write!(
+                f,
+                "{} {}:{}",
+                self.command_name(),
+                if *multi { "* " } else { "" },
+                Self::join_capabilities(caps),
+            ),
+            REQ(c) | ACK(c) | NAK(c) | NEW(c) | DEL(c) => {
+                write!(f, "{} :{}", self.command_name(), Self::join_capabilities(c))
+            }
+        }
+    }
+}
+
+/// Parsing `MsgCap` implementation
 impl MsgCap {
     pub fn parse(pairs: Pairs<Rule>) -> Result<Self, Error<Rule>> {
         let mut nick = None::<CapNick>;
@@ -128,20 +171,6 @@ impl Display for MsgCap {
         let nick = match &self.nick {
             CapNick::Star => "*",
             CapNick::Nick(nick) => nick,
-        };
-        let sub_command = match &self.sub_command {
-            SubCommand::LS(multiline, capabilities) => {
-                format!(
-                    "LS {}:{}",
-                    if *multiline { "* " } else { "" },
-                    capabilities
-                        .iter()
-                        .map(|c| c.to_string())
-                        .collect::<Vec<String>>()
-                        .join(" ")
-                )
-            }
-            c => todo!("{c:?}"),
         };
 
         write!(f, "CAP {nick} {sub_command}")
