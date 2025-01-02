@@ -1,7 +1,8 @@
-use core::panic;
 use std::{collections::BTreeMap, fmt::Display};
 
 use generic_message::GenericMessage;
+use implicit_clone::sync::IString;
+use message::{Message, MessageType};
 use msg_cap::MsgCap;
 use pest::{
     error::{Error, ErrorVariant},
@@ -14,6 +15,7 @@ use grammar::{Grammar, Rule};
 use yew::AttrValue;
 
 pub mod generic_message;
+pub mod message;
 pub mod msg_cap;
 
 pub mod capability;
@@ -21,134 +23,9 @@ pub mod capability;
 #[cfg(test)]
 mod test;
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Message {
-    pub tags: BTreeMap<String, Option<String>>,
-    pub source: Option<Source>,
-    pub msg_type: MessageType,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum MessageType {
-    Generic(GenericMessage),
-    Capability(MsgCap),
-}
-
-impl Display for MessageType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MessageType::Generic(msg) => write!(f, "{msg}"),
-            MessageType::Capability(cap) => write!(f, "{cap}"),
-        }
-    }
-}
-
-impl Display for Message {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // format list of tags
-        if !self.tags.is_empty() {
-            write!(
-                f,
-                "@{} ",
-                self.tags
-                    .iter()
-                    .map(|(key, mval)| format!(
-                        "{key}{}",
-                        mval.clone().map_or(String::new(), |val| format!("={val}"))
-                    ))
-                    .collect::<Vec<String>>()
-                    .join(";")
-            )?;
-        }
-
-        // format source
-        if let Some(src) = &self.source {
-            write!(
-                f,
-                ":{} ",
-                match src {
-                    Source::Host(name) => name.to_string(),
-                    Source::User(User { nick, user, host }) => format!(
-                        "{nick}{}{}",
-                        user.clone()
-                            .map_or(String::new(), |user| format!("!{user}")),
-                        host.clone()
-                            .map_or(String::new(), |host| format!("@{host}")),
-                    ),
-                }
-            )?;
-        }
-
-        write!(f, "{}", self.msg_type)
-    }
-}
-
 #[derive(Debug)]
 pub enum MessageBuilderError {
     MultipleTrailingParameters,
-}
-
-pub struct MessageBuilder {
-    message: Message,
-}
-
-impl Message {
-    pub fn new(command: Command) -> Self {
-        Message {
-            tags: BTreeMap::new(),
-            source: None,
-            msg_type: MessageType::Generic(GenericMessage::new(command)),
-        }
-    }
-
-    pub fn builder(command: Command) -> MessageBuilder {
-        MessageBuilder {
-            message: Self::new(command),
-        }
-    }
-
-    pub fn cmd(command: &str) -> MessageBuilder {
-        Self::builder(Command::Cmd(command.into()))
-    }
-}
-
-impl MessageBuilder {
-    pub fn build(self) -> Message {
-        self.message
-    }
-
-    pub fn param(mut self, parameter: &str) -> Self {
-        match &mut self.message.msg_type {
-            MessageType::Generic(msg) => msg.parameters.push(parameter.to_owned().into()),
-            _ => panic!("Builder does not support non-generic messages."),
-        }
-        self
-    }
-
-    pub fn parameters(mut self, parameters: Vec<AttrValue>) -> Self {
-        match &mut self.message.msg_type {
-            MessageType::Generic(msg) => msg.parameters = parameters,
-            _ => panic!("Builder does not support non-generic messages."),
-        }
-        self
-    }
-
-    pub fn tag(mut self, key: &str, value: Option<&str>) -> Self {
-        self.message
-            .tags
-            .insert(key.to_owned(), value.map(|str| str.to_owned()));
-        self
-    }
-
-    pub fn host(mut self, host: &str) -> Self {
-        self.message.source = Some(Source::Host(host.to_owned().into()));
-        self
-    }
-
-    pub fn user(mut self, user: User) -> Self {
-        self.message.source = Some(Source::User(user));
-        self
-    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -167,7 +44,7 @@ pub struct User {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Command {
     Digit3(u32),
-    Cmd(String),
+    Cmd(IString),
 }
 
 impl Command {

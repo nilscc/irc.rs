@@ -4,7 +4,7 @@ use yew::AttrValue;
 ///
 /// https://ircv3.net/specs/extensions/capability-negotiation.html
 use crate::irc::parser::{
-    capability::Capability, msg_cap::MsgCap, Command, Message, MessageBuilderError,
+    capability::Capability, message::Message, msg_cap::MsgCap, Command, MessageBuilderError,
 };
 
 #[cfg(test)]
@@ -64,6 +64,8 @@ impl CapNegotiator {
         }
     }
 
+    // TODO:
+    #[allow(dead_code)]
     fn match_listed_capabilities(&self, params: Vec<AttrValue>) -> Result {
         let mut request: Vec<AttrValue> = vec![];
 
@@ -88,6 +90,8 @@ impl CapNegotiator {
         }
     }
 
+    // TODO:
+    #[allow(dead_code)]
     fn nak(&mut self, params: Vec<AttrValue>) -> Result {
         for param in params {
             for cap in param.split(" ") {
@@ -104,6 +108,8 @@ impl CapNegotiator {
         Ok(vec![])
     }
 
+    // TODO:
+    #[allow(dead_code)]
     fn ack(&mut self, params: Vec<AttrValue>) -> Result {
         for param in params {
             for cap in param.split(" ") {

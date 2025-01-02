@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
+use implicit_clone::unsync::IString;
 use pest::{error::Error, iterators::Pairs};
-use yew::AttrValue;
 
 use super::{capability::Capability, grammar::Rule, unexpected_rule};
 
@@ -14,10 +14,81 @@ pub struct MsgCap {
     pub sub_command: SubCommand,
 }
 
+/// Builder implementations
+impl MsgCap {
+    pub fn builder() -> Builder {
+        Builder {
+            nick: None,
+            sub_command: None,
+        }
+    }
+}
+
+pub struct Builder {
+    nick: Option<CapNick>,
+    sub_command: Option<SubCommand>,
+}
+
+impl Builder {
+    pub fn star(mut self) -> Self {
+        self.nick = Some(CapNick::Star);
+        self
+    }
+    pub fn nick(mut self, nick: IString) -> Self {
+        self.nick = Some(CapNick::Nick(nick));
+        self
+    }
+
+    pub fn ls(mut self, multiline: bool) -> Self {
+        self.sub_command = Some(SubCommand::LS(multiline, vec![]));
+        self
+    }
+
+    pub fn req(mut self) -> Self {
+        self.sub_command = Some(SubCommand::REQ(vec![]));
+        self
+    }
+
+    pub fn ack(mut self) -> Self {
+        self.sub_command = Some(SubCommand::ACK(vec![]));
+        self
+    }
+
+    pub fn nak(mut self) -> Self {
+        self.sub_command = Some(SubCommand::NAK(vec![]));
+        self
+    }
+
+    /// Add a single capability
+    pub fn single(self, single_capability: &str) -> Self {
+        let cap = Capability::Single(single_capability.to_string().into());
+        self.capability(cap)
+    }
+
+    pub fn capability(mut self, capability: Capability) -> Self {
+        use SubCommand::*;
+
+        match &mut self.sub_command {
+            Some(LS(_, capabilities)) => capabilities.push(capability),
+            _ => todo!(),
+        };
+
+        self
+    }
+
+    /// Build message from Builder. Panics if nick or sub_command is not set.
+    pub fn build(self) -> MsgCap {
+        MsgCap {
+            nick: self.nick.unwrap(),
+            sub_command: self.sub_command.unwrap(),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum CapNick {
     Star,
-    Nick(AttrValue),
+    Nick(IString),
 }
 
 impl CapNick {
@@ -172,6 +243,8 @@ impl Display for MsgCap {
             CapNick::Star => "*",
             CapNick::Nick(nick) => nick,
         };
+
+        let sub_command = ""; // TODO:
 
         write!(f, "CAP {nick} {sub_command}")
     }

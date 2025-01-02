@@ -7,7 +7,7 @@ mod test;
 use buffer::Buffer;
 use cap_negotiator::CapNegotiator;
 
-use super::parser::{capability::Capability, Message};
+use super::parser::{capability::Capability, message::Message};
 
 #[derive(Debug, PartialEq, Clone)]
 enum ClientState {

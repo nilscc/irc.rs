@@ -17,7 +17,7 @@ fn test_generic_message() {
     assert_eq!(
         msg,
         GenericMessage {
-            command: Command::Cmd("TEST".to_string()),
+            command: Command::Cmd("TEST".to_string().into()),
             parameters: vec!["a", "b", "c", "x y z"]
                 .iter()
                 .map(|s| s.to_owned().into())

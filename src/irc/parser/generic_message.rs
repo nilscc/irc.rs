@@ -1,10 +1,10 @@
 use std::fmt::Display;
 
+use implicit_clone::unsync::IString;
 use pest::{
     error::Error,
     iterators::{Pair, Pairs},
 };
-use yew::AttrValue;
 
 use super::{grammar::Rule, unexpected_rule, Command};
 
@@ -14,7 +14,7 @@ mod test;
 #[derive(Debug, PartialEq, Clone)]
 pub struct GenericMessage {
     pub command: Command,
-    pub parameters: Vec<AttrValue>,
+    pub parameters: Vec<IString>,
 }
 
 impl GenericMessage {
@@ -50,12 +50,12 @@ impl GenericMessage {
         let cmd = pair.as_str().to_owned();
         match pair.into_inner().next() {
             Some(val) if val.as_rule() == Rule::digit3 => Ok(Command::Digit3(cmd.parse().unwrap())),
-            _ => Ok(Command::Cmd(cmd)),
+            _ => Ok(Command::Cmd(cmd.into())),
         }
     }
 
-    fn parse_parameters(pairs: Pairs<Rule>) -> Result<Vec<AttrValue>, Error<Rule>> {
-        let mut params = Vec::<AttrValue>::new();
+    fn parse_parameters(pairs: Pairs<Rule>) -> Result<Vec<IString>, Error<Rule>> {
+        let mut params = Vec::<IString>::new();
         for pair in pairs {
             match pair.as_rule() {
                 Rule::middle => params.push(pair.as_str().to_owned().into()),

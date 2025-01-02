@@ -1,6 +1,6 @@
 use core::panic;
 
-use super::{Command, Message, User};
+use super::{Message, User};
 
 fn parse(input: &str) -> Message {
     match Message::parse(input) {
@@ -31,7 +31,7 @@ fn test_message_parse_3digit_command() {
     let input = "001";
     let msg = parse(input);
     assert_eq!(msg.to_string(), input);
-    assert_eq!(msg, Message::builder(Command::Digit3(1)).build());
+    assert_eq!(msg, Message::digit3(1).build());
 
     // check string generation
     assert_eq!("001", msg.msg_type.to_string());

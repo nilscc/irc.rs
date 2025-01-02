@@ -1,4 +1,4 @@
-use crate::irc::{client::Capability, parser::Message};
+use crate::irc::{client::Capability, parser::msg_cap::MsgCap};
 
 use super::CapNegotiator;
 
@@ -13,10 +13,11 @@ fn test_empty_request() {
 
     let msgs = negotiator
         .handle(
-            Message::cmd("CAP")
-                .param("*")
-                .param("LS")
-                .param("multi-prefix sasl")
+            MsgCap::builder()
+                .star()
+                .ls(false)
+                .single("multi-prefix")
+                .single("sasl")
                 .build(),
         )
         .unwrap();
@@ -39,10 +40,11 @@ fn test_sinlge_request() {
 
     let msgs = negotiator
         .handle(
-            Message::cmd("CAP")
-                .param("*")
-                .param("LS")
-                .param("multi-prefix sasl")
+            MsgCap::builder()
+                .star()
+                .ls(false)
+                .single("multi-prefix")
+                .single("sasl")
                 .build(),
         )
         .unwrap();
@@ -69,10 +71,11 @@ fn test_multiple_requests() {
 
     let msgs = negotiator
         .handle(
-            Message::cmd("CAP")
-                .param("*")
-                .param("LS")
-                .param("multi-prefix sasl")
+            MsgCap::builder()
+                .star()
+                .ls(false)
+                .single("multi-prefix")
+                .single("sasl")
                 .build(),
         )
         .unwrap();
@@ -85,13 +88,7 @@ fn test_multiple_requests() {
 
     // test ack/nak
     let msgs = negotiator
-        .handle(
-            Message::cmd("CAP")
-                .param("*")
-                .param("ACK")
-                .param("sasl")
-                .build(),
-        )
+        .handle(MsgCap::builder().star().ack().single("sasl").build())
         .unwrap();
     assert_eq!(msgs, vec![]);
 
@@ -99,10 +96,10 @@ fn test_multiple_requests() {
 
     let msgs = negotiator
         .handle(
-            Message::cmd("CAP")
-                .param("*")
-                .param("NAK")
-                .param("multi-prefix")
+            MsgCap::builder()
+                .star()
+                .nak()
+                .single("multi-prefix")
                 .build(),
         )
         .unwrap();
