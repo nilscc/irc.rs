@@ -1,10 +1,10 @@
 use std::{collections::BTreeMap, fmt::Display};
 
-use implicit_clone::unsync::IString;
+use yew::AttrValue;
 
 use crate::irc::parser::User;
 
-use super::{generic_message::GenericMessage, msg_cap::MsgCap, Command, Source};
+use super::{generic_message::GenericMessage, msg_cap::MsgCap, Source};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Message {
@@ -14,30 +14,27 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new(msg_type: MessageType) -> Self {
-        Message {
-            tags: BTreeMap::new(),
-            source: None,
-            msg_type,
-        }
+    pub fn builder() -> MessageBuilder {
+        MessageBuilder::new()
     }
 
-    pub fn generic(command: Command) -> MessageBuilder {
-        let msg_type = MessageType::Generic(GenericMessage::new(command));
-        MessageBuilder {
-            message: Self::new(msg_type),
-        }
+    pub fn generic(msg: GenericMessage) -> MessageBuilder {
+        let msg_type = MessageType::Generic(msg);
+        MessageBuilder::new().msg_type(msg_type)
     }
 
     pub fn cmd(command: &str) -> MessageBuilder {
-        Self::generic(Command::Cmd(command.to_string().into()))
+        Self::generic(GenericMessage::cmd(command))
     }
 
     pub fn digit3(digit: u32) -> MessageBuilder {
-        Self::generic(Command::Digit3(digit))
+        Self::generic(GenericMessage::digit3(digit))
     }
 
-    //pub fn cap() -> MessageBuilder {}
+    pub fn cap(msg_cap: MsgCap) -> MessageBuilder {
+        let msg_type = MessageType::Capability(msg_cap);
+        MessageBuilder::new().msg_type(msg_type)
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -96,44 +93,63 @@ impl Display for Message {
 }
 
 pub struct MessageBuilder {
-    message: Message,
+    tags: BTreeMap<String, Option<String>>,
+    source: Option<Source>,
+    msg_type: Option<MessageType>,
 }
 
 impl MessageBuilder {
+    fn new() -> MessageBuilder {
+        MessageBuilder {
+            tags: BTreeMap::new(),
+            source: None,
+            msg_type: None,
+        }
+    }
+
+    /// Panics if msg_type is `None`!
     pub fn build(self) -> Message {
-        self.message
+        Message {
+            tags: self.tags,
+            source: self.source,
+            msg_type: self.msg_type.unwrap(),
+        }
+    }
+
+    pub fn msg_type(mut self, msg_type: MessageType) -> Self {
+        self.msg_type = Some(msg_type);
+        self
     }
 
     pub fn param(mut self, parameter: &str) -> Self {
-        match &mut self.message.msg_type {
-            MessageType::Generic(msg) => msg.parameters.push(parameter.to_owned().into()),
+        match &mut self.msg_type {
+            Some(MessageType::Generic(msg)) => msg.parameters.push(parameter.to_owned().into()),
             _ => panic!("Builder does not support non-generic messages."),
         }
         self
     }
 
-    pub fn parameters(mut self, parameters: Vec<IString>) -> Self {
-        match &mut self.message.msg_type {
-            MessageType::Generic(msg) => msg.parameters = parameters,
+    pub fn parameters(mut self, parameters: Vec<AttrValue>) -> Self {
+        match &mut self.msg_type {
+            Some(MessageType::Generic(msg)) => msg.parameters = parameters,
             _ => panic!("Builder does not support non-generic messages."),
         }
         self
     }
 
     pub fn tag(mut self, key: &str, value: Option<&str>) -> Self {
-        self.message
-            .tags
+        self.tags
             .insert(key.to_owned(), value.map(|str| str.to_owned()));
         self
     }
 
     pub fn host(mut self, host: &str) -> Self {
-        self.message.source = Some(Source::Host(host.to_owned().into()));
+        self.source = Some(Source::Host(host.to_owned().into()));
         self
     }
 
     pub fn user(mut self, user: User) -> Self {
-        self.message.source = Some(Source::User(user));
+        self.source = Some(Source::User(user));
         self
     }
 }

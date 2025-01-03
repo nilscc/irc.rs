@@ -1,10 +1,10 @@
 use std::fmt::Display;
 
-use implicit_clone::unsync::IString;
 use pest::{
     error::Error,
     iterators::{Pair, Pairs},
 };
+use yew::AttrValue;
 
 use super::{grammar::Rule, unexpected_rule, Command};
 
@@ -14,9 +14,10 @@ mod test;
 #[derive(Debug, PartialEq, Clone)]
 pub struct GenericMessage {
     pub command: Command,
-    pub parameters: Vec<IString>,
+    pub parameters: Vec<AttrValue>,
 }
 
+/// Construction impls
 impl GenericMessage {
     pub fn new(command: Command) -> Self {
         GenericMessage {
@@ -25,6 +26,21 @@ impl GenericMessage {
         }
     }
 
+    pub fn cmd(cmd: &str) -> Self {
+        Self::new(Command::Cmd(cmd.to_string().into()))
+    }
+
+    pub fn digit3(digit: u32) -> Self {
+        Self::new(Command::Digit3(digit))
+    }
+
+    pub fn param(mut self, param: &str) -> Self {
+        self.parameters.push(param.to_string().into());
+        self
+    }
+}
+
+impl GenericMessage {
     pub fn parse(pairs: Pairs<Rule>) -> Result<Self, Error<Rule>> {
         let mut command = None::<Command>;
         let mut parameters = vec![];
@@ -54,8 +70,8 @@ impl GenericMessage {
         }
     }
 
-    fn parse_parameters(pairs: Pairs<Rule>) -> Result<Vec<IString>, Error<Rule>> {
-        let mut params = Vec::<IString>::new();
+    fn parse_parameters(pairs: Pairs<Rule>) -> Result<Vec<AttrValue>, Error<Rule>> {
+        let mut params = Vec::<AttrValue>::new();
         for pair in pairs {
             match pair.as_rule() {
                 Rule::middle => params.push(pair.as_str().to_owned().into()),

@@ -1,7 +1,6 @@
 use std::{collections::BTreeMap, fmt::Display};
 
 use generic_message::GenericMessage;
-use implicit_clone::sync::IString;
 use message::{Message, MessageType};
 use msg_cap::MsgCap;
 use pest::{
@@ -44,7 +43,7 @@ pub struct User {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Command {
     Digit3(u32),
-    Cmd(IString),
+    Cmd(AttrValue),
 }
 
 impl Command {

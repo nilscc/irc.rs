@@ -4,7 +4,11 @@ use yew::AttrValue;
 ///
 /// https://ircv3.net/specs/extensions/capability-negotiation.html
 use crate::irc::parser::{
-    capability::Capability, message::Message, msg_cap::MsgCap, Command, MessageBuilderError,
+    capability::Capability,
+    generic_message::GenericMessage,
+    message::Message,
+    msg_cap::{MsgCap, SubCommand},
+    Command, MessageBuilderError,
 };
 
 #[cfg(test)]
@@ -37,17 +41,17 @@ impl CapNegotiator {
     }
 
     pub fn ls(&self, version: Option<&str>) -> Message {
-        let mut builder = Message::cmd("CAP").param("LS");
+        let mut msg = GenericMessage::cmd("CAP").param("LS");
 
         if let Some(version) = version {
-            builder = builder.param(version.as_ref());
+            msg = msg.param(version.as_ref());
         }
 
-        builder.build()
+        Message::generic(msg).build()
     }
 
     pub fn end(&self) -> Message {
-        Message::cmd("CAP").param("END").build()
+        Message::generic(GenericMessage::cmd("CAP").param("END")).build()
     }
 
     pub fn handle(&mut self, message: MsgCap) -> Result {
@@ -57,6 +61,7 @@ impl CapNegotiator {
         println!("{nick:?} {subcmd:?}");
 
         match subcmd {
+            SubCommand::LS(_, capabilities) => self.match_listed_capabilities(capabilities),
             //"LS" => self.match_listed_capabilities(param.to_vec()),
             //"ACK" => self.ack(param.to_vec()),
             //"NAK" => self.nak(param.to_vec()),
@@ -66,16 +71,13 @@ impl CapNegotiator {
 
     // TODO:
     #[allow(dead_code)]
-    fn match_listed_capabilities(&self, params: Vec<AttrValue>) -> Result {
+    fn match_listed_capabilities(&self, capabilities: &Vec<Capability>) -> Result {
         let mut request: Vec<AttrValue> = vec![];
 
         // check if input parameters contain any requested capabilities
-        for param in params {
-            for capability in param.split(" ") {
-                let capability = Capability::new(capability);
-                if self.requested.contains(&capability) {
-                    request.push(capability.to_string().into());
-                }
+        for capability in capabilities {
+            if self.requested.contains(capability) {
+                request.push(capability.to_string().into());
             }
         }
 
@@ -83,10 +85,13 @@ impl CapNegotiator {
         if request.is_empty() {
             Ok(vec![])
         } else {
-            Ok(vec![Message::cmd("CAP")
-                .param("REQ")
-                .param(&request.join(" "))
-                .build()])
+            Ok(vec![Message::cap(
+                MsgCap::req().capabilities(request).build(),
+            )
+            .build()])
+            //.param("REQ")
+            //.param(&request.join(" "))
+            //.build()])
         }
     }
 

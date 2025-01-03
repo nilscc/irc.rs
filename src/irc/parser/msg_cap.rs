@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
-use implicit_clone::unsync::IString;
 use pest::{error::Error, iterators::Pairs};
+use yew::AttrValue;
 
 use super::{capability::Capability, grammar::Rule, unexpected_rule};
 
@@ -22,6 +22,14 @@ impl MsgCap {
             sub_command: None,
         }
     }
+
+    pub fn ls(multiline: bool) -> Builder {
+        Self::builder().star().ls(multiline)
+    }
+
+    pub fn req() -> Builder {
+        Self::builder().star().req()
+    }
 }
 
 pub struct Builder {
@@ -34,7 +42,7 @@ impl Builder {
         self.nick = Some(CapNick::Star);
         self
     }
-    pub fn nick(mut self, nick: IString) -> Self {
+    pub fn nick(mut self, nick: AttrValue) -> Self {
         self.nick = Some(CapNick::Nick(nick));
         self
     }
@@ -60,20 +68,26 @@ impl Builder {
     }
 
     /// Add a single capability
-    pub fn single(self, single_capability: &str) -> Self {
+    pub fn single(mut self, single_capability: &str) -> Self {
         let cap = Capability::Single(single_capability.to_string().into());
-        self.capability(cap)
+        self.push_capability(cap);
+        self
     }
 
-    pub fn capability(mut self, capability: Capability) -> Self {
+    pub fn capabilities(mut self, capabilities: Vec<AttrValue>) -> Self {
+        for cap in capabilities {
+            self.push_capability(Capability::Single(cap));
+        }
+        self
+    }
+
+    fn push_capability(&mut self, capability: Capability) {
         use SubCommand::*;
 
         match &mut self.sub_command {
             Some(LS(_, capabilities)) => capabilities.push(capability),
             _ => todo!(),
         };
-
-        self
     }
 
     /// Build message from Builder. Panics if nick or sub_command is not set.
@@ -88,7 +102,7 @@ impl Builder {
 #[derive(Debug, PartialEq, Clone)]
 pub enum CapNick {
     Star,
-    Nick(IString),
+    Nick(AttrValue),
 }
 
 impl CapNick {
