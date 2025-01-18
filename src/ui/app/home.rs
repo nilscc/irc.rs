@@ -1,4 +1,6 @@
 mod buffer_view;
+mod channel_list;
+mod user_list;
 
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -11,8 +13,11 @@ use crate::irc::{
     parser::{Source, User},
 };
 
-use super::{Route, Settings};
 use buffer_view::BufferView;
+use channel_list::Channels;
+use user_list::Users;
+
+use super::{Route, Settings};
 
 #[cfg(test)]
 mod test;
@@ -22,28 +27,36 @@ pub struct HomeProps {
     pub settings: Option<Settings>,
 }
 
-fn example_buffer() -> Buffer {
-    Buffer {
-        id: 0,
-        name: "#helloworld".into(),
-        motd: Some("Hello world! This is a strange place to be.".into()),
-        lines: vec![
-            Line {
-                id: 0,
-                source: Source::Host("localhost".into()),
-                message: "moep".into(),
-            },
-            Line {
-                id: 1,
-                source: Source::User(User {
-                    nick: "McManiaC".into(),
-                    user: None,
-                    host: None,
-                }),
-                message: "Hello world!".into(),
-            },
-        ],
-    }
+fn example_buffers() -> Vec<Buffer> {
+    vec![
+        Buffer {
+            id: 0,
+            name: "#helloworld".into(),
+            motd: Some("Hello world! This is a strange place to be.".into()),
+            lines: vec![
+                Line {
+                    id: 0,
+                    source: Source::Host("localhost".into()),
+                    message: "moep".into(),
+                },
+                Line {
+                    id: 1,
+                    source: Source::User(User {
+                        nick: "McManiaC".into(),
+                        user: None,
+                        host: None,
+                    }),
+                    message: "Hello world!".into(),
+                },
+            ],
+        },
+        Buffer {
+            id: 1,
+            name: "#test".into(),
+            motd: None,
+            lines: vec![],
+        },
+    ]
 }
 
 #[function_component]
@@ -52,9 +65,15 @@ pub fn HomePage(props: &HomeProps) -> Html {
 
     let client = use_state_eq(|| {
         let mut c = Client::new();
-        c.buffers.push(example_buffer());
+        c.buffers.append(&mut example_buffers());
         c
     });
+
+    let channel_names = client
+        .buffers
+        .iter()
+        .map(|b| b.name.clone())
+        .collect::<Vec<AttrValue>>();
 
     if props.settings.is_none() {
         nav.push(&Route::Settings);
@@ -66,7 +85,9 @@ pub fn HomePage(props: &HomeProps) -> Html {
             <main
                 class="flex flex-row w-full h-full"
                 >
+                <Channels names={channel_names}/>
                 <BufferView buffer={client.buffers[0].clone()} />
+                <Users />
             </main>
         }
     }
