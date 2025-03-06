@@ -27,6 +27,39 @@ There are also a bunch of development dependencies:
 [websocket]: https://docs.rs/websocket/latest/websocket/
 [dotenv]: https://docs.rs/dotenv/latest/dotenv/
 
+# Installing
+
+For development [rustup] for your basic rust installation. This can also be
+done with your favorite package manager of your choice. Then install current
+stable together with the wasm32 target via:
+
+```bash
+rustup default stable
+rustup target add wasm32-unknown-unknown
+```
+
+Next install trunk with cargo:
+
+```bash
+cargo install trunk
+```
+
+[rustup]: https://www.rust-lang.org/tools/install
+
+## TailwindCSS
+
+Check which version of tailwind is being used by trunk, it might be necessary
+to upgrade:
+
+```bash
+trunk tools
+```
+
+TO BE CONTINUED
+
+
+
+
 # Testing
 
 Tests requiring a [dotenv] environment will be ignored by default, as to not
