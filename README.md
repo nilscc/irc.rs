@@ -55,9 +55,8 @@ to upgrade:
 trunk tools
 ```
 
-TO BE CONTINUED
-
-
+On NixOS simply installing `tailwindcss` through your system config or
+home-manager should be sufficient.
 
 
 # Testing
